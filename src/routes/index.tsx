@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import logoAsset from "@/assets/edcigam-logo.asset.json";
+import edcigamLogo from "@/assets/edcigam-logo.jpg";
 import mentor1 from "@/assets/mentor-1.jpg";
 import mentor2 from "@/assets/mentor-2.jpg";
 import heroBg from "@/assets/hero-bg.jpg";
@@ -27,10 +27,10 @@ export const Route = createFileRoute("/")({
         content: "Менторство до оффера Golang Backend — авторская методика, разбор BigTech-микросервисов, коучинг.",
       },
       { property: "og:type", content: "website" },
-      { property: "og:image", content: logoAsset.url },
+      { property: "og:image", content: edcigamLogo },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "EdCigamCo · Мастерская Go" },
-      { name: "twitter:image", content: logoAsset.url },
+      { name: "twitter:image", content: edcigamLogo },
     ],
   }),
   component: Landing,
@@ -175,7 +175,7 @@ function Logo({ className = "" }: { className?: string }) {
   return (
     <div className={`flex min-w-0 items-center gap-3 ${className}`}>
       <img
-        src={logoAsset.url}
+        src={edcigamLogo}
         alt="EdCigamCo"
         width={40}
         height={40}
@@ -265,7 +265,7 @@ function Hero() {
         <div className="relative mx-auto w-full max-w-xs sm:max-w-sm md:max-w-none">
           <div className="absolute -inset-8 -z-10 rounded-full bg-gold/10 blur-3xl" />
           <img
-            src={logoAsset.url}
+            src={edcigamLogo}
             alt="EdCigamCo logo"
             width={640}
             height={640}
@@ -392,6 +392,7 @@ function Mentors() {
       role: "Senior Go Engineer · Архитектор курса",
       bio: "5 лет коммерческой Go-разработки, 5 лет преподавания. Автор курса «Заря» и методологии step-by-step обучения.",
       tags: ["Go · Microservices", "System Design", "Авторские курсы"],
+      imgClassName: "absolute inset-x-0 -top-5 h-[476px] w-full object-cover object-top",
     },
     {
       img: mentor2,
@@ -399,6 +400,7 @@ function Mentors() {
       role: "Backend Engineer · МКП-коуч",
       bio: "Практикующий разработчик и коуч. Ведёт «Метакогнитивное программирование» — психология и аналитика обучения.",
       tags: ["Go · BigTech", "Mock interviews", "МКП-коучинг"],
+      imgClassName: "absolute inset-0 h-full w-full object-cover object-top",
     },
   ];
   return (
@@ -409,9 +411,14 @@ function Mentors() {
         <div className="mt-12 grid gap-6 md:grid-cols-2 md:gap-8">
           {mentors.map((m) => (
             <article key={m.name} className="surface-card surface-card-hover overflow-hidden rounded-2xl">
-              <div className="relative aspect-[4/3] overflow-hidden">
-                <img src={m.img} alt={m.name} loading="lazy" width={768} height={576} className="h-full w-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
+              <div className="relative h-[450px] overflow-hidden">
+                <img
+                  src={m.img}
+                  alt={m.name}
+                  loading="lazy"
+                  className={m.imgClassName}
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
               </div>
               <div className="p-6 sm:p-7">
                 <h3 className="font-display text-2xl">{m.name}</h3>
@@ -622,11 +629,11 @@ function Landing() {
         <Hero />
         <Advantages />
         <Program />
-        <Services />
         <Mentors />
-        <Reviews />
         <Companies />
         <Audience />
+        <Services />
+        <Reviews />
         <FAQ />
         <CTA />
       </main>

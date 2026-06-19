@@ -1,5 +1,5 @@
 {
-  "name": "tanstack_start_ts",
+  "name": "landing-mentoring-go",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -12,6 +12,9 @@
     "format": "prettier --write ."
   },
   "dependencies": {
+    "@fontsource-variable/manrope": "^5.2.5",
+    "@fontsource-variable/unbounded": "^5.2.5",
+    "@fontsource/jetbrains-mono": "^5.2.5",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -67,7 +70,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
-    "@lovable.dev/vite-tanstack-config": "2.5.3",
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
@@ -78,7 +80,6 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^15.15.0",
-    "nitro": "3.0.260603-beta",
     "prettier": "^3.7.3",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
