@@ -182,10 +182,10 @@ function Logo({ className = "" }: { className?: string }) {
         className="h-10 w-10 shrink-0 rounded-md object-cover ring-1 ring-border"
       />
       <div className="min-w-0 leading-tight">
-        <div className="font-display text-sm font-semibold tracking-wide gradient-gold-text truncate">
+        <div className="font-display text-sm font-semibold tracking-wide gradient-edcigam-text truncate">
           EdCigamCo
         </div>
-        <div className="brand-glass brand-glass-sm text-[13px] truncate">Мастерская Go</div>
+        <div className="brand-glass brand-glass-heading text-[13px] truncate">Мастерская Go</div>
       </div>
     </div>
   );
@@ -229,21 +229,21 @@ function SectionHeader({
 
 function Hero() {
   return (
-    <section className="relative overflow-hidden">
+    <section className="landing-section relative shrink-0 overflow-hidden">
       <div
         className="absolute inset-0 -z-10 opacity-60"
         style={{ backgroundImage: `url(${heroBg})`, backgroundSize: "cover", backgroundPosition: "center" }}
       />
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background/40 via-background/70 to-background" />
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:px-6 sm:py-20 md:grid-cols-[1.2fr_1fr] md:items-center md:gap-12 md:py-28 lg:py-32">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 py-16 sm:px-6 sm:py-20 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] md:items-center md:gap-12 md:py-28 lg:py-32">
         <div className="min-w-0">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-4 py-1.5 text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs">
             <span className="h-1.5 w-1.5 rounded-full bg-gold" />
             набор открыт · поток 2026
           </div>
           <h1 className="font-display text-[2rem] font-bold leading-[1.08] sm:text-5xl md:text-6xl">
-            Стань <span className="gradient-gold-text">Golang Backend</span> разработчиком —
-            <span className="gradient-silver-text"> с поддержкой до оффера</span>
+            Стань <span className="brand-glass brand-glass-heading">Golang Backend</span> разработчиком —
+            <span className="brand-glass brand-glass-text"> с поддержкой до оффера</span>
           </h1>
           <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
             Авторская программа менторства для тех, кто заходит в IT с нуля или мигрирует с frontend и QA.
@@ -253,23 +253,23 @@ function Hero() {
             <a href="#cta" className="btn-primary rounded-full px-6 py-3 text-sm font-semibold sm:px-7 sm:py-3.5">Записаться на разбор</a>
             <a href="#program" className="btn-ghost-gold rounded-full px-6 py-3 text-sm font-semibold sm:px-7 sm:py-3.5">Посмотреть программу</a>
           </div>
-          <dl className="mt-10 grid max-w-md grid-cols-3 gap-4 sm:gap-6">
+          <dl className="mt-10 grid w-full max-w-md grid-cols-[repeat(3,minmax(0,1fr))] gap-4 sm:gap-6">
             {[["5+", "лет в Go"], ["10", "шагов до оффера"], ["1:1", "формат работы"]].map(([n, l]) => (
-              <div key={l}>
-                <dt className="font-display text-2xl gradient-gold-text">{n}</dt>
+              <div key={l} className="min-w-0">
+                <dt className="brand-glass brand-glass-text font-display text-2xl">{n}</dt>
                 <dd className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground sm:text-xs">{l}</dd>
               </div>
             ))}
           </dl>
         </div>
-        <div className="relative mx-auto w-full max-w-xs sm:max-w-sm md:max-w-none">
+        <div className="relative min-w-0 w-full">
           <div className="absolute -inset-8 -z-10 rounded-full bg-gold/10 blur-3xl" />
           <img
             src={edcigamLogo}
             alt="EdCigamCo logo"
             width={640}
             height={640}
-            className="animate-float-soft mx-auto w-full max-w-xs rounded-2xl object-cover ring-1 ring-border sm:max-w-sm"
+            className="animate-float-soft mx-auto w-full rounded-2xl object-cover ring-1 ring-border"
             style={{ boxShadow: "0 30px 80px -30px rgba(0,0,0,0.7)" }}
           />
         </div>
@@ -280,11 +280,11 @@ function Hero() {
 
 function Advantages() {
   return (
-    <section id="advantages" className="py-20 sm:py-24">
+    <section id="advantages" className="landing-section shrink-0 py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeader eyebrow="Преимущества" title={<>Почему <span className="gradient-gold-text">EdCigamCo</span></>}
+        <SectionHeader eyebrow="Преимущества" title={<>Почему <span className="gradient-edcigam-text">EdCigamCo</span></>}
           subtitle="Шесть причин, по которым ученики выбирают нашу мастерскую вместо потокового обучения." />
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))] [&>*]:min-w-0 [&>*]:min-h-fit [&>*]:w-full">
           {advantages.map((a, i) => (
             <div key={a.t} className="surface-card surface-card-hover rounded-2xl p-6 sm:p-7">
               <div className="font-display text-xs text-gold">0{i + 1}</div>
@@ -300,14 +300,14 @@ function Advantages() {
 
 function Program() {
   return (
-    <section id="program" className="relative py-20 sm:py-24">
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-surface/40 to-transparent" />
+    <section id="program" className="landing-section shrink-0 py-20 sm:py-24">
+      <div className="landing-section__bg bg-gradient-to-b from-transparent via-surface/40 to-transparent" />
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeader eyebrow="Программа" title={<>Путь до <span className="gradient-gold-text">первого оффера</span></>}
+        <SectionHeader eyebrow="Программа" title={<>Путь до <span className="brand-glass brand-glass-heading">первого оффера</span></>}
           subtitle="10 шагов индивидуального сопровождения — от знакомства до выхода на собеседования." />
-        <div className="mt-12 grid gap-4 md:grid-cols-2">
+        <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-[repeat(2,minmax(0,1fr))] [&>*]:min-w-0 [&>*]:min-h-fit [&>*]:w-full">
           {program.map((s) => (
-            <div key={s.n} className="surface-card surface-card-hover flex gap-4 rounded-xl p-5 sm:gap-5 sm:p-6">
+            <div key={s.n} className="surface-card surface-card-hover flex min-w-0 gap-4 rounded-xl p-5 sm:gap-5 sm:p-6">
               <div className="font-display text-2xl text-gold/80 tabular-nums shrink-0">{s.n}</div>
               <div className="min-w-0">
                 <h3 className="font-semibold">{s.t}</h3>
@@ -326,48 +326,48 @@ function Program() {
 
 function Services() {
   return (
-    <section id="services" className="relative py-20 sm:py-24">
+    <section id="services" className="landing-section shrink-0 py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
           eyebrow="Услуги"
-          title={<>Тарифы <span className="brand-glass brand-glass-sm">Мастерской Go</span></>}
+          title={<>Тарифы <span className="brand-glass brand-glass-heading">Мастерской Go</span></>}
           subtitle="Три формата работы — от разовой консультации до полного сопровождения до оффера."
         />
-        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))] [&>*]:min-w-0 [&>*]:min-h-fit [&>*]:w-full">
           {services.map((s) => (
             <div
               key={s.id}
-              className={`surface-card relative flex flex-col rounded-2xl p-6 sm:p-8 ${
-                s.highlight ? "ring-2 ring-gold/70 shadow-[0_30px_80px_-30px_rgba(212,175,55,0.4)]" : ""
+              className={`@container surface-card relative flex min-h-fit min-w-0 w-full flex-col rounded-2xl p-6 sm:p-8 ${
+                s.highlight ? "ring-2 ring-gold/70 shadow-[0_30px_80px_-30px_rgba(63,147,216,0.4)]" : ""
               }`}
             >
               {s.highlight && s.badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-[oklch(0.88_0.08_90)] to-[oklch(0.72_0.13_70)] px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-background">
+                <div className="absolute -top-3 left-1/2 max-w-[calc(100%-1.5rem)] -translate-x-1/2 truncate rounded-full bg-brand-gradient px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-background">
                   {s.badge}
                 </div>
               )}
-              <div className="text-xs uppercase tracking-[0.2em] text-gold">{s.tagline}</div>
-              <h3 className="mt-3 font-display text-2xl">{s.name}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{s.desc}</p>
-              <div className="mt-6 flex items-baseline gap-2">
-                <div className="font-display text-3xl gradient-gold-text sm:text-4xl">{s.price}</div>
-                <div className="text-xs text-muted-foreground">{s.unit}</div>
+              <div className="min-w-0 text-xs uppercase tracking-[0.2em] text-gold">{s.tagline}</div>
+              <h3 className="mt-3 min-w-0 font-display text-xl sm:text-2xl">{s.name}</h3>
+              <p className="mt-2 min-w-0 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+              <div className="mt-6 flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-1">
+                <div className="brand-glass brand-glass-text min-w-0 font-display text-[clamp(1.5rem,6cqi,2.25rem)] leading-none">{s.price}</div>
+                <div className="min-w-0 text-xs text-muted-foreground">{s.unit}</div>
               </div>
-              <ul className="mt-6 flex-1 space-y-3 text-sm">
+              <ul className="mt-6 min-w-0 shrink-0 space-y-3 text-sm">
                 {s.features.map((f) => (
-                  <li key={f} className="flex items-start gap-3">
+                  <li key={f} className="flex min-w-0 items-start gap-3">
                     <span className="mt-1.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-gold/15 text-gold">
                       <svg viewBox="0 0 12 12" className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M2 6.5L4.5 9L10 3" />
                       </svg>
                     </span>
-                    <span className="text-muted-foreground">{f}</span>
+                    <span className="min-w-0 text-muted-foreground">{f}</span>
                   </li>
                 ))}
               </ul>
               <a
                 href="#cta"
-                className={`mt-8 rounded-full px-6 py-3 text-center text-sm font-semibold ${
+                className={`mt-8 w-full min-w-0 rounded-full px-6 py-3 text-center text-sm font-semibold ${
                   s.highlight ? "btn-primary" : "btn-ghost-gold"
                 }`}
               >
@@ -391,8 +391,7 @@ function Mentors() {
       name: "Эдуард",
       role: "Senior Go Engineer · Архитектор курса",
       bio: "5 лет коммерческой Go-разработки, 5 лет преподавания. Автор курса «Заря» и методологии step-by-step обучения.",
-      tags: ["Go · Microservices", "System Design", "Авторские курсы"],
-      imgClassName: "absolute inset-x-0 -top-5 h-[476px] w-full object-cover object-top",
+      tags: ["Go · Microservices", "System Design", "Авторские курсы", "System Design", "Авторские курсы"],
     },
     {
       img: mentor2,
@@ -400,33 +399,32 @@ function Mentors() {
       role: "Backend Engineer · МКП-коуч",
       bio: "Практикующий разработчик и коуч. Ведёт «Метакогнитивное программирование» — психология и аналитика обучения.",
       tags: ["Go · BigTech", "Mock interviews", "МКП-коучинг"],
-      imgClassName: "absolute inset-0 h-full w-full object-cover object-top",
     },
   ];
   return (
-    <section id="mentors" className="py-20 sm:py-24">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeader eyebrow="Менторы" title={<>Команда <span className="gradient-gold-text">EdCigamCo</span></>}
+    <section id="mentors" className="landing-section mx-auto w-full max-w-[1316px] shrink-0 py-20 sm:py-24">
+      <div className="mx-auto flex w-full min-w-0 flex-col items-center justify-center px-4 sm:px-6">
+        <SectionHeader eyebrow="Менторы" title={<>Команда <span className="gradient-edcigam-text">EdCigamCo</span></>}
           subtitle="Двое практикующих инженеров — не методисты, а действующие разработчики." />
-        <div className="mt-12 grid gap-6 md:grid-cols-2 md:gap-8">
+        <div className="mt-12 grid h-auto w-full min-w-0 grid-cols-1 items-stretch gap-6 md:h-[546px] md:w-[974px] md:grid-cols-2 md:grid-rows-1 md:gap-x-[20px] md:gap-y-8 [&>*]:min-h-0 [&>*]:min-w-0 md:[&>*]:h-full">
           {mentors.map((m) => (
-            <article key={m.name} className="surface-card surface-card-hover overflow-hidden rounded-2xl">
-              <div className="relative h-[450px] overflow-hidden">
+            <article key={m.name} className="mentor-card surface-card surface-card-hover grid h-auto min-h-0 w-full grid-rows-[67fr_33fr] overflow-hidden rounded-2xl md:h-full">
+              <div className="mentor-card__media relative min-h-0 h-full overflow-hidden">
                 <img
                   src={m.img}
                   alt={m.name}
                   loading="lazy"
-                  className={m.imgClassName}
+                  className="mentor-card__photo"
                 />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
               </div>
-              <div className="p-6 sm:p-7">
-                <h3 className="font-display text-2xl">{m.name}</h3>
-                <div className="mt-1 text-sm text-gold">{m.role}</div>
-                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{m.bio}</p>
-                <div className="mt-5 flex flex-wrap gap-2">
-                  {m.tags.map((t) => (
-                    <span key={t} className="rounded-full border border-border bg-surface-2/60 px-3 py-1 text-xs text-muted-foreground">{t}</span>
+              <div className="mentor-card__body min-h-0 h-full overflow-hidden">
+                <h3 className="mentor-card__name font-display">{m.name}</h3>
+                <div className="mentor-card__role text-gold">{m.role}</div>
+                <p className="mentor-card__bio text-muted-foreground">{m.bio}</p>
+                <div className="mentor-card__tags">
+                  {m.tags.map((t, i) => (
+                    <span key={`${m.name}-${i}`} className="mentor-card__tag rounded-full border border-border bg-surface-2/60 text-muted-foreground">{t}</span>
                   ))}
                 </div>
               </div>
@@ -443,22 +441,22 @@ function Reviews() {
   const current = active !== null ? reviews[active] : null;
 
   return (
-    <section id="reviews" className="relative py-20 sm:py-24">
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-surface/30 to-transparent" />
+    <section id="reviews" className="landing-section shrink-0 py-20 sm:py-24">
+      <div className="landing-section__bg bg-gradient-to-b from-transparent via-surface/30 to-transparent" />
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
           eyebrow="Отзывы"
-          title={<>Что говорят <span className="gradient-gold-text">выпускники</span></>}
+          title={<>Что говорят <span className="brand-glass brand-glass-heading">выпускники</span></>}
           subtitle="Истории учеников, которые прошли путь до оффера вместе с нами."
         />
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))] [&>*]:min-w-0 [&>*]:min-h-fit [&>*]:w-full">
           {reviews.map((r, i) => (
             <article
               key={r.name}
-              className="surface-card surface-card-hover flex flex-col rounded-2xl p-6 sm:p-7"
+              className="surface-card surface-card-hover flex min-w-0 flex-col rounded-2xl p-6 sm:p-7"
             >
               <div className="flex items-center gap-3">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[oklch(0.88_0.08_90)] to-[oklch(0.72_0.13_70)] font-display text-lg text-background">
+                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-gradient font-display text-lg text-background">
                   {r.name.charAt(0)}
                 </div>
                 <div className="min-w-0">
@@ -469,7 +467,7 @@ function Reviews() {
               <div className="mt-4 text-gold/70" aria-hidden>
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor"><path d="M7 7h4v4H7a2 2 0 0 0-2 2v4H1v-4a6 6 0 0 1 6-6zm12 0h4v4h-4a2 2 0 0 0-2 2v4h-4v-4a6 6 0 0 1 6-6z"/></svg>
               </div>
-              <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground line-clamp-5">
+              <p className="mt-2 shrink-0 text-sm leading-relaxed text-muted-foreground line-clamp-5">
                 {r.short}
               </p>
               <button
@@ -491,7 +489,7 @@ function Reviews() {
             <>
               <DialogHeader className="text-left">
                 <div className="flex items-center gap-3">
-                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[oklch(0.88_0.08_90)] to-[oklch(0.72_0.13_70)] font-display text-xl text-background">
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-gradient font-display text-xl text-background">
                     {current.name.charAt(0)}
                   </div>
                   <div className="min-w-0">
@@ -514,9 +512,9 @@ function Reviews() {
 function Companies() {
   const row = [...companies, ...companies];
   return (
-    <section id="companies" className="py-20 sm:py-24">
+    <section id="companies" className="landing-section shrink-0 py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeader eyebrow="Трудоустройство" title={<>Куда устраиваются <span className="gradient-gold-text">наши ученики</span></>}
+        <SectionHeader eyebrow="Трудоустройство" title={<>Куда устраиваются <span className="brand-glass brand-glass-heading">наши ученики</span></>}
           subtitle="Компании, в которые наши выпускники и менторы выходили на Go-позиции." />
       </div>
       <div className="relative mt-12 overflow-hidden">
@@ -525,7 +523,7 @@ function Companies() {
         <div className="flex w-max animate-marquee gap-4">
           {row.map((c, i) => (
             <div key={`${c}-${i}`} className="surface-card flex h-20 min-w-[180px] items-center justify-center rounded-xl px-8 sm:min-w-[200px]">
-              <span className="font-display text-lg tracking-wide gradient-silver-text">{c}</span>
+              <span className="brand-glass brand-glass-text font-display text-lg tracking-wide">{c}</span>
             </div>
           ))}
         </div>
@@ -536,13 +534,13 @@ function Companies() {
 
 function Audience() {
   return (
-    <section className="py-20 sm:py-24">
+    <section className="landing-section shrink-0 py-20 sm:py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <SectionHeader eyebrow="Для кого" title={<>Кому подойдёт <span className="gradient-gold-text">программа</span></>}
+        <SectionHeader eyebrow="Для кого" title={<>Кому подойдёт <span className="brand-glass brand-glass-heading">программа</span></>}
           subtitle="Три портрета учеников, с которыми мы регулярно работаем — и доводим до оффера." />
-        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))] [&>*]:min-w-0 [&>*]:min-h-fit [&>*]:w-full">
           {audiences.map((a) => (
-            <div key={a.t} className="surface-card surface-card-hover rounded-2xl p-6 sm:p-7">
+            <div key={a.t} className="surface-card surface-card-hover min-w-0 rounded-2xl p-6 sm:p-7">
               <div className="h-px w-10 bg-gold" />
               <h3 className="mt-5 font-display text-xl">{a.t}</h3>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{a.d}</p>
@@ -556,9 +554,9 @@ function Audience() {
 
 function FAQ() {
   return (
-    <section id="faq" className="py-20 sm:py-24">
+    <section id="faq" className="landing-section shrink-0 py-20 sm:py-24">
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
-        <SectionHeader eyebrow="FAQ" title={<>Частые <span className="gradient-gold-text">вопросы</span></>} />
+        <SectionHeader eyebrow="FAQ" title={<>Частые <span className="brand-glass brand-glass-heading">вопросы</span></>} />
         <div className="mt-10 divide-y divide-border/60 rounded-2xl border border-border/60 bg-surface/40">
           {faq.map((f) => (
             <details key={f.q} className="group p-5 sm:p-6 [&_summary::-webkit-details-marker]:hidden">
@@ -577,15 +575,15 @@ function FAQ() {
 
 function CTA() {
   return (
-    <section id="cta" className="px-4 py-20 sm:px-6 sm:py-24">
+    <section id="cta" className="landing-section shrink-0 px-4 py-20 sm:px-6 sm:py-24">
       <div className="surface-card relative mx-auto max-w-5xl overflow-hidden rounded-3xl p-7 sm:p-10 md:p-16">
         <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-gold/20 blur-3xl" />
         <div className="absolute -bottom-24 -left-20 h-72 w-72 rounded-full bg-silver/10 blur-3xl" />
-        <div className="relative grid gap-8 md:grid-cols-[1.4fr_1fr] md:items-center md:gap-10">
+        <div className="relative grid grid-cols-1 gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] md:items-center md:gap-10 [&>*]:min-w-0">
           <div className="min-w-0">
             <div className="text-xs uppercase tracking-[0.25em] text-gold">Бесплатный разбор</div>
             <h2 className="mt-4 font-display text-2xl sm:text-3xl md:text-5xl">
-              Запишитесь на <span className="gradient-gold-text">персональный разбор</span>
+              Запишитесь на <span className="brand-glass brand-glass-heading">персональный разбор</span>
             </h2>
             <p className="mt-5 max-w-xl text-muted-foreground">
               30 минут с ментором: оценим стартовую точку, обсудим цели и составим персональный план до оффера на Go.
@@ -609,7 +607,7 @@ function Footer() {
     <footer className="border-t border-border/40 py-10">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-5 px-4 text-sm text-muted-foreground sm:px-6 md:flex-row">
         <Logo />
-        <div className="text-center">© {new Date().getFullYear()} EdCigamCo · <span className="brand-glass brand-glass-sm">Мастерская Go</span></div>
+        <div className="text-center">© {new Date().getFullYear()} EdCigamCo · Мастерская Go. Все права защищены.</div>
         <div className="flex gap-5">
           <a href="https://t.me/edcigamco" target="_blank" rel="noopener noreferrer" className="hover:text-foreground">Telegram</a>
           <a href="mailto:hello@edcigam.co" className="hover:text-foreground">Email</a>
@@ -623,9 +621,9 @@ function Landing() {
   // suppress unused import warning under strict TS
   useEffect(() => {}, []);
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="min-h-screen overflow-x-clip">
       <Nav />
-      <main>
+      <main className="flex flex-col">
         <Hero />
         <Advantages />
         <Program />
