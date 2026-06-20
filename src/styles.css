@@ -380,6 +380,112 @@
     background: var(--gold);
   }
 
+  #reviews .reviews-carousel {
+    --reviews-grid-gap: 1.25rem;
+    --reviews-slide-gap: var(--reviews-grid-gap);
+    position: relative;
+    margin-top: 3rem;
+    padding-inline: 2.75rem;
+  }
+
+  #reviews .reviews-carousel__viewport {
+    overflow: hidden;
+    padding-block: 2rem;
+    margin-block: -2rem;
+  }
+
+  #reviews .reviews-carousel__grid > .surface-card {
+    position: relative;
+    z-index: 0;
+    min-height: var(--reviews-card-height, auto);
+  }
+
+  #reviews .reviews-carousel__grid > .surface-card:hover {
+    z-index: 1;
+  }
+
+  #reviews .reviews-carousel__track {
+    display: flex;
+    touch-action: pan-y pinch-zoom;
+    margin-left: calc(var(--reviews-slide-gap) * -1);
+  }
+
+  #reviews .reviews-carousel__slide {
+    flex: 0 0 100%;
+    min-width: 0;
+    padding-left: var(--reviews-slide-gap);
+  }
+
+  #reviews .reviews-carousel__grid {
+    display: grid;
+    gap: var(--reviews-grid-gap);
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (min-width: 640px) {
+    #reviews .reviews-carousel__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-template-rows: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  #reviews .reviews-carousel__placeholder {
+    min-height: var(--reviews-card-height, auto);
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  #reviews .reviews-carousel__arrow {
+    position: absolute;
+    top: 50%;
+    z-index: 10;
+    display: grid;
+    height: 2.5rem;
+    width: 2.5rem;
+    place-items: center;
+    transform: translateY(-50%);
+    border-radius: 9999px;
+    border: 1px solid oklch(0.62 0.03 240 / 0.35);
+    background: oklch(0.18 0.01 240 / 0.85);
+    color: var(--gold);
+    cursor: pointer;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease,
+      color 0.2s ease,
+      opacity 0.2s ease;
+  }
+
+  #reviews .reviews-carousel__arrow:hover:not(:disabled) {
+    border-color: oklch(0.72 0.08 85 / 0.55);
+    background: oklch(0.22 0.015 240 / 0.95);
+    color: var(--gold-soft);
+  }
+
+  #reviews .reviews-carousel__arrow:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+  }
+
+  #reviews .reviews-carousel__arrow--prev {
+    left: 0;
+  }
+
+  #reviews .reviews-carousel__arrow--next {
+    right: 0;
+  }
+
+  @media (max-width: 639px) {
+    #reviews .reviews-carousel {
+      padding-inline: 3.25rem;
+    }
+
+    #reviews .reviews-carousel__arrow {
+      height: 2.25rem;
+      width: 2.25rem;
+    }
+  }
+
   #mentors .surface-card {
     min-height: 0;
   }

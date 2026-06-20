@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
-import { Menu } from "lucide-react";
+import { ChevronLeft, ChevronRight, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import edcigamLogo from "@/assets/edcigam-logo.jpg";
 import mentor1 from "@/assets/mentor-1.jpg";
@@ -876,9 +876,156 @@ function Mentors() {
   );
 }
 
+type Review = (typeof reviews)[number];
+
+function chunkItems<T>(items: T[], size: number): T[][] {
+  const pages: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    pages.push(items.slice(i, i + size));
+  }
+  return pages;
+}
+
+function useReviewPageSize() {
+  const [pageSize, setPageSize] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(min-width: 640px)").matches ? 4 : 1,
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 640px)");
+    const onChange = () => setPageSize(mq.matches ? 4 : 1);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  return pageSize;
+}
+
+const ReviewCard = forwardRef<
+  HTMLElement,
+  {
+    review: Review;
+    onRead: () => void;
+  }
+>(function ReviewCard({ review, onRead }, ref) {
+  return (
+    <article
+      ref={ref}
+      className="surface-card surface-card-hover flex h-full min-h-0 min-w-0 flex-col gap-3 rounded-2xl p-4 sm:gap-4 sm:p-6"
+    >
+      <div className="flex items-center gap-3 sm:gap-4">
+        <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand-gradient font-display text-xl text-background sm:h-16 sm:w-16 sm:text-2xl">
+          {review.name.charAt(0)}
+        </div>
+        <div className="min-w-0">
+          <div className="truncate font-semibold">{review.name}</div>
+          <div className="truncate text-xs text-gold">{review.role}</div>
+        </div>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col justify-between gap-3">
+        <p className="text-sm leading-relaxed text-muted-foreground line-clamp-4 sm:line-clamp-5">
+          {review.short}
+        </p>
+        <button
+          type="button"
+          onClick={onRead}
+          className="inline-flex w-fit items-center gap-2 text-sm font-semibold text-gold transition-colors hover:text-gold-soft"
+        >
+          Читать отзыв
+          <span aria-hidden>→</span>
+        </button>
+      </div>
+    </article>
+  );
+});
+
 function Reviews() {
   const [active, setActive] = useState<number | null>(null);
   const current = active !== null ? reviews[active] : null;
+  const pageSize = useReviewPageSize();
+  const pages = useMemo(
+    () =>
+      chunkItems(
+        reviews.map((review, index) => ({ review, index })),
+        pageSize,
+      ),
+    [pageSize],
+  );
+
+  const reviewCardRefs = useRef<(HTMLElement | null)[]>([]);
+  const carouselViewportRef = useRef<HTMLDivElement | null>(null);
+
+  const syncCardHeights = useCallback(() => {
+    const cards = reviewCardRefs.current.filter(
+      (card): card is HTMLElement => card instanceof HTMLElement,
+    );
+
+    if (!cards.length) return;
+
+    const viewport = carouselViewportRef.current;
+    viewport?.style.removeProperty("--reviews-card-height");
+    cards.forEach((card) => {
+      card.style.height = "auto";
+    });
+
+    const maxHeight = Math.max(...cards.map((card) => card.scrollHeight));
+
+    if (maxHeight > 0) {
+      viewport?.style.setProperty("--reviews-card-height", `${maxHeight}px`);
+      cards.forEach((card) => {
+        card.style.height = `${maxHeight}px`;
+      });
+    }
+  }, []);
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    align: "start",
+    loop: false,
+    containScroll: "trimSnaps",
+    duration: pageSize === 1 ? 20 : 25,
+  });
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  const updateScrollState = useCallback(() => {
+    if (!emblaApi) return;
+    setCanScrollPrev(emblaApi.canScrollPrev());
+    setCanScrollNext(emblaApi.canScrollNext());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    updateScrollState();
+    emblaApi.on("select", updateScrollState);
+    emblaApi.on("reInit", updateScrollState);
+    return () => {
+      emblaApi.off("select", updateScrollState);
+      emblaApi.off("reInit", updateScrollState);
+    };
+  }, [emblaApi, updateScrollState]);
+
+  useEffect(() => {
+    emblaApi?.reInit();
+  }, [emblaApi, pages]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+
+    const onLayout = () => syncCardHeights();
+
+    emblaApi.on("reInit", onLayout);
+    emblaApi.on("settle", onLayout);
+    onLayout();
+
+    window.addEventListener("resize", onLayout);
+
+    return () => {
+      emblaApi.off("reInit", onLayout);
+      emblaApi.off("settle", onLayout);
+      window.removeEventListener("resize", onLayout);
+    };
+  }, [emblaApi, syncCardHeights, pages, pageSize]);
 
   return (
     <section id="reviews" className="landing-section shrink-0 py-20 sm:py-24">
@@ -889,37 +1036,77 @@ function Reviews() {
           title={<>Что говорят <span className="brand-glass brand-glass-heading">выпускники</span></>}
           subtitle="Истории учеников, которые прошли путь до оффера вместе с нами."
         />
-        <div className="mt-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-[repeat(3,minmax(0,1fr))] [&>*]:min-w-0 [&>*]:min-h-fit [&>*]:w-full">
-          {reviews.map((r, i) => (
-            <article
-              key={r.name}
-              className="surface-card surface-card-hover flex min-w-0 flex-col rounded-2xl p-6 sm:p-7"
-            >
-              <div className="flex items-center gap-3">
-                <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-gradient font-display text-lg text-background">
-                  {r.name.charAt(0)}
+        <div
+          key={pageSize}
+          className="reviews-carousel"
+          role="region"
+          aria-roledescription="carousel"
+          aria-label="Отзывы выпускников"
+        >
+          <button
+            type="button"
+            className="reviews-carousel__arrow reviews-carousel__arrow--prev"
+            aria-label="Предыдущие отзывы"
+            disabled={!canScrollPrev}
+            onClick={() => emblaApi?.scrollPrev()}
+          >
+            <ChevronLeft className="h-5 w-5" aria-hidden />
+          </button>
+          <div
+            ref={(node) => {
+              carouselViewportRef.current = node;
+              emblaRef(node);
+            }}
+            className="reviews-carousel__viewport"
+          >
+            <div className="reviews-carousel__track">
+              {pages.map((page, pageIndex) => (
+                <div
+                  key={pageIndex}
+                  className="reviews-carousel__slide"
+                  role="group"
+                  aria-roledescription="slide"
+                  aria-label={`Страница ${pageIndex + 1} из ${pages.length}`}
+                >
+                  <div className="reviews-carousel__grid">
+                    {Array.from({ length: pageSize }).map((_, slotIndex) => {
+                      const item = page[slotIndex];
+
+                      if (!item) {
+                        return (
+                          <div
+                            key={`placeholder-${pageIndex}-${slotIndex}`}
+                            className="reviews-carousel__placeholder"
+                            aria-hidden
+                          />
+                        );
+                      }
+
+                      return (
+                        <ReviewCard
+                          key={item.review.name}
+                          ref={(node) => {
+                            reviewCardRefs.current[item.index] = node;
+                          }}
+                          review={item.review}
+                          onRead={() => setActive(item.index)}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <div className="truncate font-semibold">{r.name}</div>
-                  <div className="truncate text-xs text-gold">{r.role}</div>
-                </div>
-              </div>
-              <div className="mt-4 text-gold/70" aria-hidden>
-                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor"><path d="M7 7h4v4H7a2 2 0 0 0-2 2v4H1v-4a6 6 0 0 1 6-6zm12 0h4v4h-4a2 2 0 0 0-2 2v4h-4v-4a6 6 0 0 1 6-6z"/></svg>
-              </div>
-              <p className="mt-2 shrink-0 text-sm leading-relaxed text-muted-foreground line-clamp-5">
-                {r.short}
-              </p>
-              <button
-                type="button"
-                onClick={() => setActive(i)}
-                className="mt-5 inline-flex w-fit items-center gap-2 text-sm font-semibold text-gold transition-colors hover:text-gold-soft"
-              >
-                Читать отзыв
-                <span aria-hidden>→</span>
-              </button>
-            </article>
-          ))}
+              ))}
+            </div>
+          </div>
+          <button
+            type="button"
+            className="reviews-carousel__arrow reviews-carousel__arrow--next"
+            aria-label="Следующие отзывы"
+            disabled={!canScrollNext}
+            onClick={() => emblaApi?.scrollNext()}
+          >
+            <ChevronRight className="h-5 w-5" aria-hidden />
+          </button>
         </div>
       </div>
 
