@@ -162,6 +162,42 @@
     background-color: rgba(90, 163, 220, 0.1);
     box-shadow: 0 0 20px rgba(63, 147, 216, 0.15);
   }
+
+  .nav-menu-btn {
+    display: grid;
+    height: 2.75rem;
+    width: 2.75rem;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: 9999px;
+    border: 1px solid oklch(0.35 0.008 240 / 0.5);
+    background: linear-gradient(160deg, oklch(0.22 0.007 240 / 0.9), oklch(0.18 0.006 240 / 0.9));
+    color: var(--gold);
+    cursor: pointer;
+    transition: border-color 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+  }
+
+  .nav-menu-btn:hover {
+    border-color: rgba(90, 163, 220, 0.55);
+    background-color: rgba(90, 163, 220, 0.1);
+    box-shadow: 0 0 20px rgba(63, 147, 216, 0.15);
+    transform: translateY(-1px);
+  }
+
+  .nav-sheet-link {
+    display: block;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    transition: color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .nav-sheet-link:hover {
+    color: var(--foreground);
+    background-color: oklch(0.22 0.007 240 / 0.55);
+  }
   .hairline { border-top: 1px solid oklch(0.35 0.008 240 / 0.4); }
 
   .brand-glass {
@@ -188,33 +224,31 @@
     background-image: linear-gradient(
       100deg,
       #92c5ee 0%,
-      #5aa3dc 22%,
-      #3f93d8 38%,
-      #ffffff 50%,
-      #3f93d8 62%,
-      #5aa3dc 78%,
+      #5aa3dc 11%,
+      #3f93d8 19%,
+      #ffffff 25%,
+      #3f93d8 31%,
+      #5aa3dc 39%,
+      #92c5ee 50%,
+      #5aa3dc 61%,
+      #3f93d8 69%,
+      #ffffff 75%,
+      #3f93d8 81%,
+      #5aa3dc 89%,
       #92c5ee 100%
     );
-    background-size: 300% 100%;
+    background-size: 200% 100%;
     letter-spacing: -0.01em;
-    animation: brand-glass-heading-shimmer 1.4s linear infinite;
+    filter: drop-shadow(0 0 12px rgba(106, 178, 240, 0.5));
+    animation: brand-glass-heading-shimmer 1.5s linear infinite;
   }
 
   @keyframes brand-glass-heading-shimmer {
-    0% {
-      background-position: 0% 50%;
-      filter: drop-shadow(0 0 10px rgba(106, 178, 240, 0.55))
-        drop-shadow(0 0 24px rgba(63, 147, 216, 0.3));
-    }
-    50% {
+    from {
       background-position: 100% 50%;
-      filter: drop-shadow(0 0 18px rgba(130, 200, 255, 0.8))
-        drop-shadow(0 0 40px rgba(63, 147, 216, 0.5));
     }
-    100% {
-      background-position: 200% 50%;
-      filter: drop-shadow(0 0 10px rgba(106, 178, 240, 0.55))
-        drop-shadow(0 0 24px rgba(63, 147, 216, 0.3));
+    to {
+      background-position: 0% 50%;
     }
   }
 
@@ -260,7 +294,53 @@
     container-type: size;
     width: 100%;
     min-height: 0;
-    aspect-ratio: 416 / 533;
+  }
+
+  @media (max-width: 767px) {
+    #mentors .mentor-card {
+      container-type: normal;
+    }
+
+    #mentors .mentor-card__media {
+      aspect-ratio: 416 / 357;
+      height: auto;
+    }
+
+    #mentors .mentor-card__photo {
+      position: absolute;
+      inset: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    #mentors .mentor-card__body {
+      height: auto;
+      justify-content: flex-start;
+      overflow: visible;
+      padding: 1rem 1.25rem 1.125rem;
+      font-size: 0.8125rem;
+    }
+
+    #mentors .mentor-card__name {
+      font-size: 1.5rem;
+      line-height: 1.2;
+    }
+
+    #mentors .mentor-card__role {
+      margin-top: 0.25rem;
+      font-size: 0.8125rem;
+    }
+
+    #mentors .mentor-card__bio {
+      margin-top: 0.625rem;
+      font-size: 0.8125rem;
+      line-height: 1.4;
+    }
+
+    #mentors .mentor-card__more {
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+    }
   }
 
   @media (min-width: 768px) {
@@ -319,16 +399,125 @@
     line-height: 1.35;
   }
 
-  #mentors .mentor-card__tags {
-    display: flex;
-    flex-wrap: wrap;
+  #mentors .mentor-card__more {
     margin-top: 0.85em;
-    gap: 0.35em;
+    font-size: 1em;
+    line-height: 1.2;
   }
 
-  #mentors .mentor-card__tag {
-    font-size: 0.85em;
-    padding: 0.2em 0.65em;
-    line-height: 1.2;
+  .mentor-dialog {
+    width: min(94vw, 1104px);
+    height: min(calc(100dvh - 1rem), 720px);
+    max-width: none;
+  }
+
+  .mentor-dialog-text,
+  .mentor-dialog-tags {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: oklch(0.45 0.02 240 / 0.65) transparent;
+    padding-right: 0.375rem;
+  }
+
+  .mentor-dialog-text::-webkit-scrollbar,
+  .mentor-dialog-tags::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .mentor-dialog-text::-webkit-scrollbar-button,
+  .mentor-dialog-tags::-webkit-scrollbar-button {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+
+  .mentor-dialog-text::-webkit-scrollbar-thumb,
+  .mentor-dialog-tags::-webkit-scrollbar-thumb {
+    background: oklch(0.45 0.02 240 / 0.65);
+    border-radius: 999px;
+  }
+
+  .mentor-dialog-text::-webkit-scrollbar-track,
+  .mentor-dialog-tags::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .mentor-dialog-scrollwrap {
+    position: relative;
+  }
+
+  .mentor-scrollbar {
+    display: none;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 6px;
+    border-radius: 999px;
+    background: oklch(0.24 0.02 240 / 0.55);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .mentor-scrollbar.is-visible {
+    opacity: 0.85;
+  }
+
+  .mentor-scrollbar__thumb {
+    width: 100%;
+    border-radius: inherit;
+    background: oklch(0.62 0.03 240 / 0.95);
+  }
+
+  .mentor-dialog__photo {
+    object-fit: cover;
+    object-position: center top;
+  }
+
+  @media (min-width: 768px) {
+    .mentor-dialog-text,
+    .mentor-dialog-tags {
+      overflow-y: auto;
+      scrollbar-gutter: auto;
+    }
+
+    .mentor-dialog {
+      height: min(calc(100dvh - 2rem), 640px, calc(94vw * 0.68));
+    }
+
+    .mentor-dialog__photo {
+      object-position: center center;
+    }
+  }
+
+  @media (hover: none) and (pointer: coarse) {
+    .mentor-scrollbar {
+      display: block;
+    }
+
+    .mentor-scrollbar {
+      width: 4px;
+    }
+
+    .mentor-scrollbar__thumb {
+      background: oklch(0.62 0.03 240 / 0.8);
+    }
+
+    .mentor-dialog-text,
+    .mentor-dialog-tags {
+      overflow-y: scroll;
+      scrollbar-gutter: stable;
+      padding-right: 0.625rem;
+    }
+
+    .mentor-dialog-text::-webkit-scrollbar,
+    .mentor-dialog-tags::-webkit-scrollbar {
+      width: 0;
+      height: 0;
+    }
   }
 }

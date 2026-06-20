@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Menu } from "lucide-react";
 import edcigamLogo from "@/assets/edcigam-logo.jpg";
 import mentor1 from "@/assets/mentor-1.jpg";
 import mentor2 from "@/assets/mentor-2.jpg";
@@ -11,6 +12,23 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+
+const navLinks = [
+  { href: "#advantages", label: "Преимущества" },
+  { href: "#program", label: "Программа" },
+  { href: "#mentors", label: "Менторы" },
+  { href: "#services", label: "Услуги" },
+  { href: "#reviews", label: "Отзывы" },
+  { href: "#faq", label: "FAQ" },
+];
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -164,6 +182,25 @@ const reviews = [
   },
 ];
 
+const mentors = [
+  {
+    img: mentor1,
+    name: "Олег «Magical Keeper»",
+    role: "Senior Go Engineer · Архитектор курса",
+    bio: "5 лет коммерческой Go-разработки, 5 лет преподавания. Автор курса «Заря» и методологии step-by-step обучения.",
+    full: "Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и  столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и сто столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и сто столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и сто столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и сто столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и сто столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и сто столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и сто столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и стостолько же в преподавании. Строил и сопровождал микросервисные системы, проходил путь от джуна до тимлида. Автор курса «Заря» — стартовой программы для тех, кто впервые пишет на Go. Разработал step-by-step методику: исследовательский формат, где каждый шаг опирается на предыдущий, без «воды» и бесконечных лекций. На менторстве ведёт архитектуру пет-проектов, system design, код-ревью и подготовку к техническим собесам. Совмещает преподавание с коммерческой разработкой — учит только то, что сам применяет в production.",
+    tags: ["Go · Microservices", "System Design", "Авторские курсы", "System Design", "Авторские курсы", "System Design", "Авторские курсы", "System Design", "Авторские курсы"],
+  },
+  {
+    img: mentor2,
+    name: "Никита",
+    role: "Backend Engineer · МКП-коуч",
+    bio: "Практикующий разработчик и коуч. Ведёт «Метакогнитивное программирование» — психология и аналитика обучения.",
+    full: "Никита — backend-инженер и коуч по методологии «Метакогнитивное программирование» (МКП). Работал с Go в продуктовых командах, знает формат собеседований в BigTech изнутри. На менторстве отвечает за мок-интервью, прокачку soft skills и настройку мышления: как не паниковать на live-coding, как структурировать ответы по system design, как держать темп на длинной дистанции обучения. МКП — это не «мотивационные речи», а конкретная аналитика: диагностика слабых мест, работа с прокрастинацией и страхом собесов. Параллельно ведёт технические разборы и помогает довести резюме и легенду до состояния, на которое откликаются HR.",
+    tags: ["Go · BigTech", "Mock interviews", "МКП-коучинг"],
+  },
+];
+
 const faq = [
   { q: "Сколько длится программа?", a: "В среднем 4–7 месяцев до первых офферов — зависит от стартового уровня и скорости работы." },
   { q: "Нужен ли опыт в программировании?", a: "Нет. Если вы новичок — стартуем с авторского курса «Заря». Если уже пишете — пропускаем базу." },
@@ -192,24 +229,111 @@ function Logo({ className = "" }: { className?: string }) {
 }
 
 function Nav() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [useMenu, setUseMenu] = useState(true);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const navMeasureRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLDivElement>(null);
+  const ctaRef = useRef<HTMLAnchorElement>(null);
+
+  useEffect(() => {
+    const check = () => {
+      const header = headerRef.current;
+      const navMeasure = navMeasureRef.current;
+      const logo = logoRef.current;
+      const cta = ctaRef.current;
+      if (!header || !navMeasure || !logo || !cta) return;
+
+      const gaps = 40;
+      const menuBtn = 44;
+      const available = header.clientWidth - logo.offsetWidth - cta.offsetWidth - menuBtn - gaps;
+      setUseMenu(navMeasure.scrollWidth > available);
+    };
+
+    check();
+    const ro = new ResizeObserver(check);
+    if (headerRef.current) ro.observe(headerRef.current);
+    window.addEventListener("resize", check);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", check);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!useMenu) setMenuOpen(false);
+  }, [useMenu]);
+
   return (
     <header className="sticky top-0 z-50 border-b border-border/40 bg-background/70 backdrop-blur-md">
-      <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:grid-cols-[auto_1fr_auto]">
-        <Logo />
-        <nav className="hidden justify-center gap-6 text-sm text-muted-foreground lg:flex xl:gap-8">
-          <a href="#advantages" className="hover:text-foreground transition-colors">Преимущества</a>
-          <a href="#program" className="hover:text-foreground transition-colors">Программа</a>
-          <a href="#services" className="hover:text-foreground transition-colors">Услуги</a>
-          <a href="#mentors" className="hover:text-foreground transition-colors">Менторы</a>
-          <a href="#reviews" className="hover:text-foreground transition-colors">Отзывы</a>
-          <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
-        </nav>
-        <a
-          href="#cta"
-          className="btn-primary shrink-0 rounded-full px-4 py-2 text-xs font-semibold sm:px-5 sm:text-sm"
-        >
-          Записаться
-        </a>
+      <div
+        ref={navMeasureRef}
+        aria-hidden
+        className="pointer-events-none absolute left-0 top-0 -z-50 flex gap-4 text-sm opacity-0 xl:gap-6"
+      >
+        {navLinks.map((l) => (
+          <span key={l.href} className="whitespace-nowrap">{l.label}</span>
+        ))}
+      </div>
+
+      <div
+        ref={headerRef}
+        className="mx-auto grid max-w-6xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 sm:px-6 sm:py-4"
+      >
+        <div ref={logoRef} className="min-w-0">
+          <Logo />
+        </div>
+
+        {!useMenu ? (
+          <nav className="flex min-w-0 items-center justify-center gap-4 text-sm text-muted-foreground xl:gap-6">
+            {navLinks.map((l) => (
+              <a key={l.href} href={l.href} className="whitespace-nowrap transition-colors hover:text-foreground">
+                {l.label}
+              </a>
+            ))}
+          </nav>
+        ) : (
+          <div aria-hidden className="min-w-0" />
+        )}
+
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <a
+            ref={ctaRef}
+            href="#cta"
+            className="btn-primary shrink-0 rounded-full px-4 py-2 text-xs font-semibold sm:px-5 sm:text-sm"
+          >
+            Записаться
+          </a>
+          {useMenu && (
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+              <SheetTrigger asChild>
+                <button type="button" className="nav-menu-btn" aria-label="Открыть меню">
+                  <Menu className="h-5 w-5" strokeWidth={2.25} />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[min(100%,320px)] border-border/60 bg-card/95 backdrop-blur-md data-[state=closed]:duration-150 data-[state=open]:duration-200">
+                <SheetHeader className="text-left">
+                  <SheetTitle className="sr-only">Навигация</SheetTitle>
+                  <Logo />
+                </SheetHeader>
+                <nav className="mt-8 flex flex-col gap-1">
+                  {navLinks.map((l) => (
+                    <SheetClose asChild key={l.href}>
+                      <a href={l.href} className="nav-sheet-link">
+                        {l.label}
+                      </a>
+                    </SheetClose>
+                  ))}
+                </nav>
+                <SheetClose asChild>
+                  <a href="#cta" className="btn-primary mt-8 block rounded-full px-6 py-3.5 text-center text-sm font-semibold">
+                    Записаться
+                  </a>
+                </SheetClose>
+              </SheetContent>
+            </Sheet>
+          )}
+        </div>
       </div>
     </header>
   );
@@ -384,31 +508,104 @@ function Services() {
   );
 }
 
+type ScrollbarIndicator = {
+  visible: boolean;
+  thumbTop: number;
+  thumbHeight: number;
+};
+
+const DEFAULT_SCROLLBAR_INDICATOR: ScrollbarIndicator = {
+  visible: false,
+  thumbTop: 0,
+  thumbHeight: 0,
+};
+
+function getScrollbarIndicator(el: HTMLDivElement | null): ScrollbarIndicator {
+  if (!el) return DEFAULT_SCROLLBAR_INDICATOR;
+  const { clientHeight, scrollHeight, scrollTop } = el;
+  if (scrollHeight <= clientHeight || clientHeight <= 0) {
+    return DEFAULT_SCROLLBAR_INDICATOR;
+  }
+
+  const ratio = clientHeight / scrollHeight;
+  const minThumbHeight = 24;
+  const rawThumbHeight = Math.round(clientHeight * ratio);
+  const thumbHeight = Math.min(clientHeight, Math.max(minThumbHeight, rawThumbHeight));
+  const maxThumbTop = Math.max(0, clientHeight - thumbHeight);
+  const rawThumbTop = Math.round((scrollTop / (scrollHeight - clientHeight)) * maxThumbTop);
+  const thumbTop = Math.max(0, Math.min(
+    maxThumbTop,
+    rawThumbTop,
+  ));
+
+  return { visible: true, thumbTop, thumbHeight };
+}
+
 function Mentors() {
-  const mentors = [
-    {
-      img: mentor1,
-      name: "Эдуард",
-      role: "Senior Go Engineer · Архитектор курса",
-      bio: "5 лет коммерческой Go-разработки, 5 лет преподавания. Автор курса «Заря» и методологии step-by-step обучения.",
-      tags: ["Go · Microservices", "System Design", "Авторские курсы", "System Design", "Авторские курсы"],
-    },
-    {
-      img: mentor2,
-      name: "Никита",
-      role: "Backend Engineer · МКП-коуч",
-      bio: "Практикующий разработчик и коуч. Ведёт «Метакогнитивное программирование» — психология и аналитика обучения.",
-      tags: ["Go · BigTech", "Mock interviews", "МКП-коучинг"],
-    },
-  ];
+  const [active, setActive] = useState<number | null>(null);
+  const current = active !== null ? mentors[active] : null;
+  const textRef = useRef<HTMLDivElement>(null);
+  const tagsRef = useRef<HTMLDivElement>(null);
+  const frameRef = useRef<number | null>(null);
+  const [textIndicator, setTextIndicator] = useState<ScrollbarIndicator>(DEFAULT_SCROLLBAR_INDICATOR);
+  const [tagsIndicator, setTagsIndicator] = useState<ScrollbarIndicator>(DEFAULT_SCROLLBAR_INDICATOR);
+
+  const updateIndicators = () => {
+    setTextIndicator(getScrollbarIndicator(textRef.current));
+    setTagsIndicator(getScrollbarIndicator(tagsRef.current));
+  };
+
+  const scheduleIndicatorsUpdate = () => {
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
+    }
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = null;
+      updateIndicators();
+    });
+  };
+
+  useEffect(() => {
+    if (active === null) {
+      setTextIndicator(DEFAULT_SCROLLBAR_INDICATOR);
+      setTagsIndicator(DEFAULT_SCROLLBAR_INDICATOR);
+      return;
+    }
+
+    scheduleIndicatorsUpdate();
+
+    const resizeObserver = new ResizeObserver(() => {
+      scheduleIndicatorsUpdate();
+    });
+    if (textRef.current) resizeObserver.observe(textRef.current);
+    if (tagsRef.current) resizeObserver.observe(tagsRef.current);
+
+    window.addEventListener("resize", scheduleIndicatorsUpdate);
+    window.addEventListener("orientationchange", scheduleIndicatorsUpdate);
+
+    const visualViewport = window.visualViewport;
+    visualViewport?.addEventListener("resize", scheduleIndicatorsUpdate);
+
+    return () => {
+      resizeObserver.disconnect();
+      window.removeEventListener("resize", scheduleIndicatorsUpdate);
+      window.removeEventListener("orientationchange", scheduleIndicatorsUpdate);
+      visualViewport?.removeEventListener("resize", scheduleIndicatorsUpdate);
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+    };
+  }, [active, current]);
+
   return (
     <section id="mentors" className="landing-section mx-auto w-full max-w-[1316px] shrink-0 py-20 sm:py-24">
       <div className="mx-auto flex w-full min-w-0 flex-col items-center justify-center px-4 sm:px-6">
         <SectionHeader eyebrow="Менторы" title={<>Команда <span className="gradient-edcigam-text">EdCigamCo</span></>}
           subtitle="Двое практикующих инженеров — не методисты, а действующие разработчики." />
-        <div className="mt-12 grid h-auto w-full min-w-0 grid-cols-1 items-stretch gap-6 md:h-[546px] md:w-[974px] md:grid-cols-2 md:grid-rows-1 md:gap-x-[20px] md:gap-y-8 [&>*]:min-h-0 [&>*]:min-w-0 md:[&>*]:h-full">
-          {mentors.map((m) => (
-            <article key={m.name} className="mentor-card surface-card surface-card-hover grid h-auto min-h-0 w-full grid-rows-[67fr_33fr] overflow-hidden rounded-2xl md:h-full">
+        <div className="mx-auto mt-12 grid h-auto w-full min-w-0 max-w-[974px] grid-cols-1 items-stretch gap-6 md:h-[546px] md:grid-cols-2 md:grid-rows-1 md:gap-x-[20px] md:gap-y-8 [&>*]:min-h-0 [&>*]:min-w-0 md:[&>*]:h-full">
+          {mentors.map((m, i) => (
+            <article key={m.name} className="mentor-card surface-card surface-card-hover grid h-auto min-h-0 w-full grid-rows-[auto_auto] overflow-hidden rounded-2xl md:h-full md:grid-rows-[67fr_33fr]">
               <div className="mentor-card__media relative min-h-0 h-full overflow-hidden">
                 <img
                   src={m.img}
@@ -418,20 +615,77 @@ function Mentors() {
                 />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
               </div>
-              <div className="mentor-card__body min-h-0 h-full overflow-hidden">
+              <div className="mentor-card__body min-h-0 overflow-hidden md:h-full">
                 <h3 className="mentor-card__name font-display">{m.name}</h3>
                 <div className="mentor-card__role text-gold">{m.role}</div>
                 <p className="mentor-card__bio text-muted-foreground">{m.bio}</p>
-                <div className="mentor-card__tags">
-                  {m.tags.map((t, i) => (
-                    <span key={`${m.name}-${i}`} className="mentor-card__tag rounded-full border border-border bg-surface-2/60 text-muted-foreground">{t}</span>
-                  ))}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setActive(i)}
+                  className="mentor-card__more inline-flex w-fit items-center gap-2 font-semibold text-gold transition-colors hover:text-gold-soft"
+                >
+                  Подробнее
+                  <span aria-hidden>→</span>
+                </button>
               </div>
             </article>
           ))}
         </div>
       </div>
+
+      <Dialog open={active !== null} onOpenChange={(o) => !o && setActive(null)}>
+        <DialogContent className="mentor-dialog max-w-none gap-0 overflow-hidden border-border/60 bg-card p-0">
+          {current && (
+            <div className="mentor-dialog__layout grid h-full min-h-0 grid-cols-1 grid-rows-[minmax(0,44%)_minmax(0,1fr)] md:grid-cols-[minmax(0,38%)_minmax(0,1fr)] md:grid-rows-1">
+              <div className="mentor-dialog__media relative min-h-0 overflow-hidden bg-surface-2/40">
+                <img
+                  src={current.img}
+                  alt={current.name}
+                  className="mentor-dialog__photo absolute inset-0 h-full w-full"
+                />
+              </div>
+              <div className="mentor-dialog__content flex min-h-0 flex-col overflow-hidden px-4 pb-4 pt-2 sm:px-6 sm:pb-6 md:px-8 md:py-8">
+                <DialogHeader className="shrink-0 text-left">
+                  <DialogTitle className="font-display text-xl sm:text-2xl">{current.name}</DialogTitle>
+                  <DialogDescription className="text-sm text-gold sm:text-base">{current.role}</DialogDescription>
+                </DialogHeader>
+                <div className="mentor-dialog-scrollwrap mt-3 min-h-0 flex-1 sm:mt-4 md:mt-5">
+                  <div
+                    ref={textRef}
+                    onScroll={scheduleIndicatorsUpdate}
+                    className="mentor-dialog-text min-h-0 h-full text-sm leading-relaxed text-muted-foreground sm:text-base"
+                  >
+                    {current.full}
+                  </div>
+                  <div className={`mentor-scrollbar ${textIndicator.visible ? "is-visible" : ""}`} aria-hidden>
+                    <div
+                      className="mentor-scrollbar__thumb"
+                      style={{ height: `${textIndicator.thumbHeight}px`, transform: `translateY(${textIndicator.thumbTop}px)` }}
+                    />
+                  </div>
+                </div>
+                <div className="mentor-dialog-scrollwrap mt-4 max-h-[5.5rem] shrink-0 sm:mt-5 sm:max-h-[5.5rem]">
+                  <div
+                    ref={tagsRef}
+                    onScroll={scheduleIndicatorsUpdate}
+                    className="mentor-dialog-tags flex h-full flex-wrap content-start gap-1.5 overflow-y-auto sm:gap-2"
+                  >
+                    {current.tags.map((t, i) => (
+                      <span key={`${t}-${i}`} className="rounded-full border border-border bg-surface-2/60 px-2.5 py-1 text-xs text-muted-foreground sm:px-3 sm:py-1.5 sm:text-sm">{t}</span>
+                    ))}
+                  </div>
+                  <div className={`mentor-scrollbar ${tagsIndicator.visible ? "is-visible" : ""}`} aria-hidden>
+                    <div
+                      className="mentor-scrollbar__thumb"
+                      style={{ height: `${tagsIndicator.thumbHeight}px`, transform: `translateY(${tagsIndicator.thumbTop}px)` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
