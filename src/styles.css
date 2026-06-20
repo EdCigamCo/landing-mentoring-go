@@ -286,6 +286,100 @@
     z-index: -1;
   }
 
+  #services .services-carousel {
+    --services-slide-spacing: 1.5rem;
+    --services-card-height: 34rem;
+    margin-top: 15px;
+    perspective: 1400px;
+  }
+
+  #services .services-carousel__viewport {
+    overflow: hidden;
+    padding: 3rem 0 2.75rem;
+  }
+
+  #services .services-carousel__track {
+    display: flex;
+    align-items: stretch;
+    touch-action: pan-y pinch-zoom;
+    margin-left: calc(var(--services-slide-spacing) * -1);
+  }
+
+  #services .services-carousel__slide {
+    position: relative;
+    flex: 0 0 min(88vw, 340px);
+    height: var(--services-card-height);
+    min-width: 0;
+    padding-left: var(--services-slide-spacing);
+  }
+
+  @media (min-width: 640px) {
+    #services .services-carousel__slide {
+      flex: 0 0 42%;
+    }
+  }
+
+  #services .services-carousel__slide-inner {
+    position: relative;
+    height: 100%;
+    overflow: visible;
+    transform-origin: center top;
+    will-change: transform, opacity;
+  }
+
+  #services .services-carousel__badge {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    z-index: 40;
+    max-width: calc(100% - 1.5rem);
+    transform: translate(-50%, -50%);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border-radius: 9999px;
+    background: var(--gradient-brand);
+    padding: 0.25rem 1rem;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: oklch(0.16 0.005 240);
+    pointer-events: none;
+  }
+
+  #services .services-carousel__card {
+    overflow: hidden;
+    user-select: none;
+  }
+
+  #services .services-carousel__dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  #services .services-carousel__dot {
+    height: 0.5rem;
+    width: 0.5rem;
+    border-radius: 9999px;
+    border: none;
+    background: oklch(0.62 0.03 240 / 0.35);
+    cursor: pointer;
+    padding: 0;
+    transition: width 0.3s ease, background-color 0.3s ease, opacity 0.3s ease;
+  }
+
+  #services .services-carousel__dot:hover {
+    background: oklch(0.62 0.03 240 / 0.55);
+  }
+
+  #services .services-carousel__dot--active {
+    width: 1.75rem;
+    background: var(--gold);
+  }
+
   #mentors .surface-card {
     min-height: 0;
   }
