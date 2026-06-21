@@ -191,7 +191,7 @@ const mentors = [
     role: "Senior Go Engineer · Архитектор курса",
     bio: "5 лет коммерческой Go-разработки, 5 лет преподавания. Автор курса «Заря» и методологии step-by-step обучения.",
     full: "Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и  столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и сто столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и сто столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и сто столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и сто столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и сто столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и сто столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и сто столько же в преподавании. Строил Эдуард — senior Go-инженер с пятилетним опытом в коммерческой разработке и стостолько же в преподавании. Строил и сопровождал микросервисные системы, проходил путь от джуна до тимлида. Автор курса «Заря» — стартовой программы для тех, кто впервые пишет на Go. Разработал step-by-step методику: исследовательский формат, где каждый шаг опирается на предыдущий, без «воды» и бесконечных лекций. На менторстве ведёт архитектуру пет-проектов, system design, код-ревью и подготовку к техническим собесам. Совмещает преподавание с коммерческой разработкой — учит только то, что сам применяет в production.",
-    tags: ["Go · Microservices", "System Design", "Авторские курсы", "System Design", "Авторские курсы", "System Design", "Авторские курсы", "System Design", "Авторские курсы"],
+    tags: ["Go · Microservices", "System Design", "Авторские курсы", "System Design", "Авторские курсы", "System Design"],
   },
   {
     img: mentor2,
@@ -395,7 +395,7 @@ function Hero() {
             alt="EdCigamCo logo"
             width={640}
             height={640}
-            className="animate-float-soft mx-auto w-full rounded-2xl object-cover ring-1 ring-border"
+            className="mx-auto w-full rounded-2xl object-cover ring-1 ring-border"
             style={{ boxShadow: "0 30px 80px -30px rgba(0,0,0,0.7)" }}
           />
         </div>
@@ -456,8 +456,8 @@ function ServiceCard({ service, isActive }: { service: Service; isActive: boolea
   return (
     <div
       className={cn(
-        "@container surface-card services-carousel__card relative flex h-full min-h-0 w-full flex-col rounded-2xl p-6 sm:p-8 transition-shadow duration-300",
-        isActive && "ring-2 ring-gold/70 shadow-[0_30px_80px_-30px_rgba(63,147,216,0.4)]",
+        "@container surface-card surface-card-hover services-carousel__card relative flex h-full min-h-0 w-full flex-col rounded-2xl p-6 sm:p-8 transition-shadow duration-300",
+        isActive && "ring-2 ring-gold/70 services-carousel__card--active",
       )}
     >
       <div className="min-w-0 text-xs uppercase tracking-[0.2em] text-gold">{service.tagline}</div>
@@ -498,10 +498,11 @@ function Services() {
     containScroll: false,
     loop: false,
     dragFree: false,
+    startIndex: 1,
   });
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(1);
   const slideInnerRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const activeIndexRef = useRef(0);
+  const activeIndexRef = useRef(1);
   const carouselViewportRef = useRef<HTMLDivElement | null>(null);
 
   const syncCardHeight = useCallback(() => {
@@ -987,11 +988,13 @@ function Reviews() {
   });
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   const updateScrollState = useCallback(() => {
     if (!emblaApi) return;
     setCanScrollPrev(emblaApi.canScrollPrev());
     setCanScrollNext(emblaApi.canScrollNext());
+    setSelectedIndex(emblaApi.selectedScrollSnap());
   }, [emblaApi]);
 
   useEffect(() => {
@@ -1027,6 +1030,14 @@ function Reviews() {
     };
   }, [emblaApi, syncCardHeights, pages, pageSize]);
 
+  const progressLabel =
+    pageSize === 1
+      ? `Отзыв ${selectedIndex + 1} из ${reviews.length}`
+      : `Отзывы ${selectedIndex * pageSize + 1}–${Math.min((selectedIndex + 1) * pageSize, reviews.length)} из ${reviews.length}`;
+
+  const progressPercent =
+    pages.length <= 1 ? 100 : (selectedIndex / (pages.length - 1)) * 100;
+
   return (
     <section id="reviews" className="landing-section shrink-0 py-20 sm:py-24">
       <div className="landing-section__bg bg-gradient-to-b from-transparent via-surface/30 to-transparent" />
@@ -1043,70 +1054,93 @@ function Reviews() {
           aria-roledescription="carousel"
           aria-label="Отзывы выпускников"
         >
-          <button
-            type="button"
-            className="reviews-carousel__arrow reviews-carousel__arrow--prev"
-            aria-label="Предыдущие отзывы"
-            disabled={!canScrollPrev}
-            onClick={() => emblaApi?.scrollPrev()}
-          >
-            <ChevronLeft className="h-5 w-5" aria-hidden />
-          </button>
-          <div
-            ref={(node) => {
-              carouselViewportRef.current = node;
-              emblaRef(node);
-            }}
-            className="reviews-carousel__viewport"
-          >
-            <div className="reviews-carousel__track">
-              {pages.map((page, pageIndex) => (
-                <div
-                  key={pageIndex}
-                  className="reviews-carousel__slide"
-                  role="group"
-                  aria-roledescription="slide"
-                  aria-label={`Страница ${pageIndex + 1} из ${pages.length}`}
-                >
-                  <div className="reviews-carousel__grid">
-                    {Array.from({ length: pageSize }).map((_, slotIndex) => {
-                      const item = page[slotIndex];
+          <div className="reviews-carousel__stage">
+            <button
+              type="button"
+              className="reviews-carousel__arrow reviews-carousel__arrow--prev"
+              aria-label="Предыдущие отзывы"
+              disabled={!canScrollPrev}
+              onClick={() => emblaApi?.scrollPrev()}
+            >
+              <ChevronLeft className="h-5 w-5" aria-hidden />
+            </button>
+            <div
+              ref={(node) => {
+                carouselViewportRef.current = node;
+                emblaRef(node);
+              }}
+              className="reviews-carousel__viewport"
+            >
+              <div className="reviews-carousel__track">
+                {pages.map((page, pageIndex) => (
+                  <div
+                    key={pageIndex}
+                    className="reviews-carousel__slide"
+                    role="group"
+                    aria-roledescription="slide"
+                    aria-label={`Страница ${pageIndex + 1} из ${pages.length}`}
+                  >
+                    <div className="reviews-carousel__grid">
+                      {Array.from({ length: pageSize }).map((_, slotIndex) => {
+                        const item = page[slotIndex];
 
-                      if (!item) {
+                        if (!item) {
+                          return (
+                            <div
+                              key={`placeholder-${pageIndex}-${slotIndex}`}
+                              className="reviews-carousel__placeholder"
+                              aria-hidden
+                            />
+                          );
+                        }
+
                         return (
-                          <div
-                            key={`placeholder-${pageIndex}-${slotIndex}`}
-                            className="reviews-carousel__placeholder"
-                            aria-hidden
+                          <ReviewCard
+                            key={item.review.name}
+                            ref={(node) => {
+                              reviewCardRefs.current[item.index] = node;
+                            }}
+                            review={item.review}
+                            onRead={() => setActive(item.index)}
                           />
                         );
-                      }
-
-                      return (
-                        <ReviewCard
-                          key={item.review.name}
-                          ref={(node) => {
-                            reviewCardRefs.current[item.index] = node;
-                          }}
-                          review={item.review}
-                          onRead={() => setActive(item.index)}
-                        />
-                      );
-                    })}
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="reviews-carousel__arrow reviews-carousel__arrow--next"
+              aria-label="Следующие отзывы"
+              disabled={!canScrollNext}
+              onClick={() => emblaApi?.scrollNext()}
+            >
+              <ChevronRight className="h-5 w-5" aria-hidden />
+            </button>
+          </div>
+          <div
+            className="reviews-carousel__progress"
+            role="group"
+            aria-label="Прогресс просмотра отзывов"
+          >
+            <div
+              className="reviews-carousel__progress-track"
+              aria-hidden
+            >
+              <div
+                className="reviews-carousel__progress-fill"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <div className="reviews-carousel__progress-meta">
+              <span>{progressLabel}</span>
+              <span>
+                {selectedIndex + 1} / {pages.length}
+              </span>
             </div>
           </div>
-          <button
-            type="button"
-            className="reviews-carousel__arrow reviews-carousel__arrow--next"
-            aria-label="Следующие отзывы"
-            disabled={!canScrollNext}
-            onClick={() => emblaApi?.scrollNext()}
-          >
-            <ChevronRight className="h-5 w-5" aria-hidden />
-          </button>
         </div>
       </div>
 
