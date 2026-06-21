@@ -5,16 +5,20 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { navLinks, type SectionId } from "./data";
+import { navLinks } from "./data/nav";
+import type { SectionId } from "./data/section-id";
 import { Logo } from "./logo";
+import type { MouseEvent } from "react";
+import { logoHomeClick } from "./section-nav";
 
 type NavMobileSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onNavigate: (sectionId: SectionId) => void;
+  onPrefetch: (sectionId: SectionId) => void;
+  onNavigate: (sectionId: SectionId, event: MouseEvent<HTMLAnchorElement>) => void;
 };
 
-export function NavMobileSheet({ open, onOpenChange, onNavigate }: NavMobileSheetProps) {
+export function NavMobileSheet({ open, onOpenChange, onPrefetch, onNavigate }: NavMobileSheetProps) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -23,7 +27,19 @@ export function NavMobileSheet({ open, onOpenChange, onNavigate }: NavMobileShee
       >
         <SheetHeader className="text-left">
           <SheetTitle className="sr-only">Навигация</SheetTitle>
-          <Logo />
+          <SheetClose asChild>
+            <a
+              href="/"
+              onClick={(event) => {
+                logoHomeClick(event);
+                onOpenChange(false);
+              }}
+              className="inline-block rounded-md outline-offset-4 focus-visible:outline-2 focus-visible:outline-gold"
+              aria-label="На главную"
+            >
+              <Logo />
+            </a>
+          </SheetClose>
         </SheetHeader>
         <nav className="mt-8 flex flex-col gap-1">
           {navLinks.map((l) => (
@@ -31,9 +47,9 @@ export function NavMobileSheet({ open, onOpenChange, onNavigate }: NavMobileShee
               <a
                 href={l.href}
                 className="nav-sheet-link"
-                onMouseEnter={() => onNavigate(l.sectionId)}
-                onFocus={() => onNavigate(l.sectionId)}
-                onClick={() => onNavigate(l.sectionId)}
+                onMouseEnter={() => onPrefetch(l.sectionId)}
+                onFocus={() => onPrefetch(l.sectionId)}
+                onClick={(event) => onNavigate(l.sectionId, event)}
               >
                 {l.label}
               </a>
@@ -44,7 +60,7 @@ export function NavMobileSheet({ open, onOpenChange, onNavigate }: NavMobileShee
           <a
             href="#cta"
             className="btn-primary mt-8 block rounded-full px-6 py-3.5 text-center text-sm font-semibold"
-            onClick={() => onNavigate("cta")}
+            onClick={(event) => onNavigate("cta", event)}
           >
             Записаться
           </a>

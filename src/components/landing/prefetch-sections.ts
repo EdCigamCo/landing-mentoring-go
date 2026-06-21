@@ -1,5 +1,6 @@
-import type { SectionId } from "./data";
 import { sectionById, sectionCatalog } from "./catalog";
+import { navLinks } from "./data/nav";
+import type { SectionId } from "./data/section-id";
 
 type QueueItem = {
   id: SectionId;
@@ -9,6 +10,15 @@ type QueueItem = {
 const loaded = new Set<SectionId>();
 const inflight = new Map<SectionId, Promise<unknown>>();
 const boostListeners = new Set<(id: SectionId) => void>();
+const mountListeners = new Set<(id: SectionId) => void>();
+const mountedSections = new Set<SectionId>();
+const mountWaiters = new Map<SectionId, Set<() => void>>();
+
+const HEIGHT_STABLE_DELAY_MS = 150;
+const HEIGHT_STABLE_TIMEOUT_MS = 2000;
+const SCROLL_CORRECTION_MS = 300;
+const SCROLL_CORRECTION_MOUNTED_MS = 150;
+const IDLE_PREFETCH_BATCH_SIZE = 3;
 
 let queue: QueueItem[] = [];
 let idleHandle: number | null = null;
@@ -32,9 +42,154 @@ function notifyBoost(id: SectionId) {
   boostListeners.forEach((listener) => listener(id));
 }
 
+function resolveMountWaiters(id: SectionId) {
+  const waiters = mountWaiters.get(id);
+  if (!waiters) return;
+  waiters.forEach((resolve) => resolve());
+  mountWaiters.delete(id);
+}
+
 export function subscribeSectionBoost(listener: (id: SectionId) => void) {
   boostListeners.add(listener);
   return () => boostListeners.delete(listener);
+}
+
+export function subscribeSectionMounted(listener: (id: SectionId) => void) {
+  mountListeners.add(listener);
+  return () => mountListeners.delete(listener);
+}
+
+export function notifySectionMounted(id: SectionId) {
+  mountedSections.add(id);
+  resolveMountWaiters(id);
+  mountListeners.forEach((listener) => listener(id));
+}
+
+export function waitForSectionMount(id: SectionId): Promise<void> {
+  if (mountedSections.has(id)) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    const waiters = mountWaiters.get(id) ?? new Set();
+    waiters.add(resolve);
+    mountWaiters.set(id, waiters);
+  });
+}
+
+function waitForLayoutStable(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => resolve());
+    });
+  });
+}
+
+function getScrollPathIds(targetId: SectionId): SectionId[] {
+  const targetIndex = sectionCatalog.findIndex((entry) => entry.id === targetId);
+  if (targetIndex === -1) return [];
+  return sectionCatalog.slice(0, targetIndex + 1).map((entry) => entry.id);
+}
+
+function isScrollPathMounted(pathIds: SectionId[]): boolean {
+  return pathIds.length > 0 && pathIds.every((id) => mountedSections.has(id));
+}
+
+function getPathElements(pathIds: SectionId[]): HTMLElement[] {
+  return pathIds
+    .map((id) => document.getElementById(id))
+    .filter((node): node is HTMLElement => node instanceof HTMLElement);
+}
+
+/** Chunk-only: качает JS без mount — безопасно для hover/focus/idle. */
+export function prefetchScrollPathChunks(targetId: SectionId): void {
+  for (const id of getScrollPathIds(targetId)) {
+    const entry = sectionById[id];
+    if (!entry) continue;
+    void prefetchChunk(id, entry.loader);
+  }
+}
+
+/** Prefetch всех секций, доступных из навигации (для mobile menu). */
+export function prefetchNavSectionChunks(): void {
+  const ids = new Set<SectionId>();
+
+  for (const link of navLinks) {
+    for (const id of getScrollPathIds(link.sectionId)) {
+      ids.add(id);
+    }
+  }
+
+  for (const id of getScrollPathIds("cta")) {
+    ids.add(id);
+  }
+
+  for (const id of ids) {
+    const entry = sectionById[id];
+    if (!entry) continue;
+    void prefetchChunk(id, entry.loader);
+  }
+}
+
+/** Нет resize на элементах пути в течение delayMs (с верхним пределом ожидания). */
+function waitForElementsHeightStable(
+  elements: HTMLElement[],
+  stableDelayMs = HEIGHT_STABLE_DELAY_MS,
+): Promise<void> {
+  if (!elements.length) return Promise.resolve();
+
+  return new Promise((resolve) => {
+    let stableTimer: number | null = null;
+    let maxTimer: number | null = null;
+
+    const finish = () => {
+      observer.disconnect();
+      if (stableTimer !== null) window.clearTimeout(stableTimer);
+      if (maxTimer !== null) window.clearTimeout(maxTimer);
+      resolve();
+    };
+
+    const scheduleStable = () => {
+      if (stableTimer !== null) window.clearTimeout(stableTimer);
+      stableTimer = window.setTimeout(finish, stableDelayMs);
+    };
+
+    const observer = new ResizeObserver(() => {
+      scheduleStable();
+    });
+
+    elements.forEach((element) => observer.observe(element));
+    scheduleStable();
+    maxTimer = window.setTimeout(finish, HEIGHT_STABLE_TIMEOUT_MS);
+  });
+}
+
+function scrollSectionIntoView(id: SectionId, behavior: ScrollBehavior) {
+  const target = document.getElementById(id);
+  if (!target) return;
+  target.scrollIntoView({ behavior, block: "start" });
+}
+
+/** Повторный scroll при поздних сдвигах layout на пути к якорю. */
+function watchScrollCorrections(targetId: SectionId, durationMs = SCROLL_CORRECTION_MS): void {
+  const elements = getPathElements(getScrollPathIds(targetId));
+  if (!elements.length) return;
+
+  let rafId: number | null = null;
+
+  const rescroll = () => {
+    if (rafId !== null) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      scrollSectionIntoView(targetId, "auto");
+    });
+  };
+
+  const observer = new ResizeObserver(rescroll);
+  elements.forEach((element) => observer.observe(element));
+
+  window.setTimeout(() => {
+    observer.disconnect();
+    if (rafId !== null) cancelAnimationFrame(rafId);
+  }, durationMs);
 }
 
 export function boostSection(id: SectionId) {
@@ -46,11 +201,63 @@ export function boostSection(id: SectionId) {
   void prefetchChunk(id, entry.loader);
 }
 
+export async function ensureSectionReady(id: SectionId): Promise<void> {
+  const entry = sectionById[id];
+  if (!entry) return;
+
+  boostSection(id);
+  await Promise.all([prefetchChunk(id, entry.loader), waitForSectionMount(id)]);
+  await waitForLayoutStable();
+}
+
+/** Загружает и монтирует все lazy-секции от начала каталога до target включительно. */
+export async function ensureScrollPathReady(
+  targetId: SectionId,
+): Promise<{ pathFullyMounted: boolean }> {
+  const pathIds = getScrollPathIds(targetId);
+  if (!pathIds.length) return { pathFullyMounted: false };
+
+  const pathFullyMounted = isScrollPathMounted(pathIds);
+
+  for (const id of pathIds) {
+    boostSection(id);
+  }
+
+  await Promise.all(
+    pathIds.map(async (id) => {
+      const entry = sectionById[id];
+      if (!entry) return;
+      await Promise.all([prefetchChunk(id, entry.loader), waitForSectionMount(id)]);
+    }),
+  );
+
+  await waitForLayoutStable();
+
+  if (!pathFullyMounted) {
+    await waitForElementsHeightStable(getPathElements(pathIds));
+  }
+
+  return { pathFullyMounted };
+}
+
+export async function navigateToSection(
+  id: SectionId,
+  options: { behavior?: ScrollBehavior } = {},
+): Promise<void> {
+  if (typeof window === "undefined") return;
+
+  const { pathFullyMounted } = await ensureScrollPathReady(id);
+
+  const behavior = options.behavior ?? "smooth";
+  scrollSectionIntoView(id, behavior);
+  watchScrollCorrections(id, pathFullyMounted ? SCROLL_CORRECTION_MOUNTED_MS : SCROLL_CORRECTION_MS);
+}
+
 function scheduleIdle(fn: () => void) {
   if (typeof requestIdleCallback !== "undefined") {
-    idleHandle = requestIdleCallback(fn, { timeout: 2000 });
+    idleHandle = requestIdleCallback(fn, { timeout: 5000 });
   } else {
-    idleHandle = window.setTimeout(fn, 120);
+    idleHandle = window.setTimeout(fn, 5000);
   }
 }
 
@@ -70,10 +277,9 @@ function drainQueue() {
     return;
   }
 
-  const next = queue.shift();
-  if (!next) return;
+  const batch = queue.splice(0, IDLE_PREFETCH_BATCH_SIZE);
 
-  void prefetchChunk(next.id, next.loader).finally(() => {
+  void Promise.all(batch.map((item) => prefetchChunk(item.id, item.loader))).finally(() => {
     scheduleIdle(drainQueue);
   });
 }
@@ -82,31 +288,21 @@ export function startBackgroundPrefetch() {
   if (started || typeof window === "undefined") return;
   started = true;
 
-  const high = sectionCatalog.filter((s) => s.priority === "high");
-  const normal = sectionCatalog.filter((s) => s.priority === "normal");
+  queue = sectionCatalog
+    .filter((entry) => entry.priority === "normal" && !loaded.has(entry.id))
+    .map((entry) => ({ id: entry.id, loader: entry.loader }));
 
-  window.setTimeout(() => {
-    high.forEach((entry) => {
-      void prefetchChunk(entry.id, entry.loader);
-    });
-  }, 100);
-
-  queue = normal.map((entry) => ({ id: entry.id, loader: entry.loader }));
   scheduleIdle(drainQueue);
 }
 
+/** Hover/focus: prefetch всего пути до секции (chunk-only, без mount). */
 export function prioritizeSection(id: SectionId) {
   cancelIdle();
-  boostSection(id);
 
-  const entry = sectionById[id];
-  if (!entry) return;
+  const pathIds = new Set(getScrollPathIds(id));
+  prefetchScrollPathChunks(id);
 
-  const rest = sectionCatalog
-    .filter((s) => s.id !== id && !loaded.has(s.id))
-    .map((s) => ({ id: s.id, loader: s.loader }));
-
-  queue = rest;
+  queue = queue.filter((item) => !pathIds.has(item.id));
   scheduleIdle(drainQueue);
 }
 

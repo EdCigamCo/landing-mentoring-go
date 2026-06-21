@@ -1,17 +1,27 @@
-import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from "react";
 import type { SectionEntry } from "./catalog";
-import type { SectionId } from "./data";
-import { subscribeSectionBoost } from "./prefetch-sections";
-import { SectionPlaceholder } from "./section-placeholder";
+import type { SectionId } from "./data/section-id";
+import { notifySectionMounted, subscribeSectionBoost } from "./prefetch-sections";
+import { SectionSkeleton } from "./section-skeletons";
+import { useSectionMinHeight } from "./use-section-min-height";
 
 type LazySectionProps = {
   entry: SectionEntry;
 };
 
+function SectionMountNotifier({ id, children }: { id: SectionId; children: ReactNode }) {
+  useEffect(() => {
+    notifySectionMounted(id);
+  }, [id]);
+
+  return children;
+}
+
 export function LazySection({ entry }: LazySectionProps) {
-  const { id, minHeight, loader } = entry;
+  const { id, loader } = entry;
+  const minHeight = useSectionMinHeight(entry);
   const [shouldMount, setShouldMount] = useState(false);
-  const sentinelRef = useRef<HTMLDivElement>(null);
+  const rootRef = useRef<HTMLElement>(null);
 
   const LazyComponent = lazy(loader);
 
@@ -24,7 +34,7 @@ export function LazySection({ entry }: LazySectionProps) {
   useEffect(() => {
     if (shouldMount) return;
 
-    const node = sentinelRef.current;
+    const node = rootRef.current;
     if (!node) return;
 
     const observer = new IntersectionObserver(
@@ -41,17 +51,25 @@ export function LazySection({ entry }: LazySectionProps) {
     return () => observer.disconnect();
   }, [shouldMount]);
 
-  if (!shouldMount) {
-    return (
-      <div ref={sentinelRef} id={id} style={{ minHeight }} aria-busy="true">
-        <SectionPlaceholder minHeight={minHeight} />
-      </div>
-    );
-  }
+  const skeleton = <SectionSkeleton id={id} />;
 
   return (
-    <Suspense fallback={<SectionPlaceholder minHeight={minHeight} />}>
-      <LazyComponent />
-    </Suspense>
+    <section
+      ref={rootRef}
+      id={id}
+      className="landing-section lazy-section shrink-0"
+      style={{ minHeight }}
+      aria-busy={!shouldMount}
+    >
+      {shouldMount ? (
+        <Suspense fallback={skeleton}>
+          <SectionMountNotifier id={id}>
+            <LazyComponent />
+          </SectionMountNotifier>
+        </Suspense>
+      ) : (
+        skeleton
+      )}
+    </section>
   );
 }

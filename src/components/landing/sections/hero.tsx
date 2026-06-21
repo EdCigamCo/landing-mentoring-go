@@ -1,5 +1,6 @@
 import { preload } from "react-dom";
-import { heroBg, heroGofer } from "../data";
+import { heroBg, heroGofer } from "../data/images/hero";
+import { sectionAnchorClick } from "../section-nav";
 import { useInViewAnimation } from "../use-in-view-animation";
 
 export function Hero() {
@@ -38,10 +39,10 @@ export function Hero() {
             Без бесконечных курсов. Только то, что приведёт к найму.
           </p>
           <div className="mt-8 flex flex-wrap gap-3 sm:gap-4">
-            <a href="#cta" className="btn-primary rounded-full px-6 py-3 text-sm font-semibold sm:px-7 sm:py-3.5">
+            <a href="#cta" onClick={sectionAnchorClick("cta")} className="btn-primary rounded-full px-6 py-3 text-sm font-semibold sm:px-7 sm:py-3.5">
               Записаться на разбор
             </a>
-            <a href="#program" className="btn-ghost-gold rounded-full px-6 py-3 text-sm font-semibold sm:px-7 sm:py-3.5">
+            <a href="#program" onClick={sectionAnchorClick("program")} className="btn-ghost-gold rounded-full px-6 py-3 text-sm font-semibold sm:px-7 sm:py-3.5">
               Посмотреть программу
             </a>
           </div>

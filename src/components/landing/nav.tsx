@@ -1,29 +1,52 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type MouseEvent } from "react";
 import { Menu } from "lucide-react";
-import { navLinks, type SectionId } from "./data";
+import { navLinks } from "./data/nav";
+import type { SectionId } from "./data/section-id";
 import { Logo } from "./logo";
-import { prioritizeSection } from "./prefetch-sections";
+import {
+  navigateToSection,
+  prefetchNavSectionChunks,
+  prioritizeSection,
+  subscribeSectionMounted,
+} from "./prefetch-sections";
+import { logoHomeClick, sectionIdFromHash } from "./section-nav";
 
 const MobileSheet = lazy(() =>
   import("./nav-mobile-sheet").then((m) => ({ default: m.NavMobileSheet })),
 );
 
-function sectionIdFromHash(hash: string): SectionId | null {
-  const id = hash.replace("#", "") as SectionId;
-  return navLinks.some((link) => link.sectionId === id) ? id : null;
-}
-
 export function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [useMenu, setUseMenu] = useState(true);
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+  const stickyHeaderRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const navMeasureRef = useRef<HTMLDivElement>(null);
-  const logoRef = useRef<HTMLDivElement>(null);
+  const logoRef = useRef<HTMLAnchorElement>(null);
   const ctaRef = useRef<HTMLAnchorElement>(null);
 
   const handleNavIntent = useCallback((sectionId: SectionId) => {
     prioritizeSection(sectionId);
+  }, []);
+
+  const handleSectionNavigate = useCallback((sectionId: SectionId, event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    setMenuOpen(false);
+    void navigateToSection(sectionId);
+  }, []);
+
+  useEffect(() => {
+    const header = stickyHeaderRef.current;
+    if (!header) return;
+
+    const updateHeaderHeight = () => {
+      document.documentElement.style.setProperty("--header-height", `${header.offsetHeight}px`);
+    };
+
+    updateHeaderHeight();
+    const ro = new ResizeObserver(updateHeaderHeight);
+    ro.observe(header);
+    return () => ro.disconnect();
   }, []);
 
   useEffect(() => {
@@ -55,37 +78,66 @@ export function Nav() {
   }, [useMenu]);
 
   useEffect(() => {
-    const sections = navLinks
-      .map((link) => document.getElementById(link.sectionId))
-      .filter((node): node is HTMLElement => node instanceof HTMLElement);
+    let observer: IntersectionObserver | null = null;
 
-    if (!sections.length) return;
+    const observeSections = () => {
+      observer?.disconnect();
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+      const sections = navLinks
+        .map((link) => document.getElementById(link.sectionId))
+        .filter((node): node is HTMLElement => node instanceof HTMLElement);
 
-        const top = visible[0];
-        if (top?.target.id) {
-          setActiveSection(top.target.id as SectionId);
-        }
-      },
-      { rootMargin: "-40% 0px -45% 0px", threshold: [0, 0.25, 0.5] },
-    );
+      if (!sections.length) return;
 
-    sections.forEach((section) => observer.observe(section));
-    return () => observer.disconnect();
+      observer = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter((entry) => entry.isIntersecting)
+            .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+
+          const top = visible[0];
+          if (top?.target.id) {
+            setActiveSection(top.target.id as SectionId);
+          }
+        },
+        { rootMargin: "-40% 0px -45% 0px", threshold: [0, 0.25, 0.5] },
+      );
+
+      sections.forEach((section) => observer!.observe(section));
+    };
+
+    observeSections();
+
+    const unsubMount = subscribeSectionMounted(() => {
+      requestAnimationFrame(observeSections);
+    });
+
+    return () => {
+      unsubMount();
+      observer?.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+
+    const id = sectionIdFromHash(window.location.hash);
+    if (id) {
+      void navigateToSection(id, { behavior: "auto" });
+      return;
+    }
+
+    window.scrollTo(0, 0);
   }, []);
 
   useEffect(() => {
     const onHashChange = () => {
       const id = sectionIdFromHash(window.location.hash);
-      if (id) prioritizeSection(id);
+      if (id) void navigateToSection(id);
     };
 
-    onHashChange();
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
@@ -97,7 +149,10 @@ export function Nav() {
     ].join(" ");
 
   return (
-    <header className="landing-header sticky top-0 z-50 border-b border-border/40 md:bg-background/70 md:backdrop-blur-md">
+    <header
+      ref={stickyHeaderRef}
+      className="landing-header sticky top-0 z-50 border-b border-border/40 md:bg-background/70 md:backdrop-blur-md"
+    >
       <div
         ref={navMeasureRef}
         aria-hidden
@@ -114,9 +169,15 @@ export function Nav() {
         ref={headerRef}
         className="mx-auto grid max-w-6xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 sm:px-6 sm:py-4"
       >
-        <div ref={logoRef} className="min-w-0">
+        <a
+          ref={logoRef}
+          href="/"
+          onClick={logoHomeClick}
+          className="min-w-0 rounded-md outline-offset-4 focus-visible:outline-2 focus-visible:outline-gold"
+          aria-label="На главную"
+        >
           <Logo />
-        </div>
+        </a>
 
         {!useMenu ? (
           <nav className="flex min-w-0 items-center justify-center gap-4 text-sm xl:gap-6">
@@ -127,7 +188,7 @@ export function Nav() {
                 className={navLinkClass(l.sectionId)}
                 onMouseEnter={() => handleNavIntent(l.sectionId)}
                 onFocus={() => handleNavIntent(l.sectionId)}
-                onClick={() => handleNavIntent(l.sectionId)}
+                onClick={(event) => handleSectionNavigate(l.sectionId, event)}
               >
                 {l.label}
               </a>
@@ -143,7 +204,7 @@ export function Nav() {
             href="#cta"
             onMouseEnter={() => handleNavIntent("cta")}
             onFocus={() => handleNavIntent("cta")}
-            onClick={() => handleNavIntent("cta")}
+            onClick={(event) => handleSectionNavigate("cta", event)}
             className="btn-primary shrink-0 rounded-full px-4 py-2 text-xs font-semibold sm:px-5 sm:text-sm"
           >
             Записаться
@@ -155,7 +216,10 @@ export function Nav() {
                 className="nav-menu-btn"
                 aria-label="Открыть меню"
                 aria-expanded={menuOpen}
-                onClick={() => setMenuOpen(true)}
+                onClick={() => {
+                  prefetchNavSectionChunks();
+                  setMenuOpen(true);
+                }}
               >
                 <Menu className="h-5 w-5" strokeWidth={2.25} />
               </button>
@@ -164,7 +228,8 @@ export function Nav() {
                   <MobileSheet
                     open={menuOpen}
                     onOpenChange={setMenuOpen}
-                    onNavigate={handleNavIntent}
+                    onPrefetch={handleNavIntent}
+                    onNavigate={handleSectionNavigate}
                   />
                 </Suspense>
               )}

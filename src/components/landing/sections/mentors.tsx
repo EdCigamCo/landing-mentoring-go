@@ -6,7 +6,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { mentors } from "../data";
+import { mentors } from "../data/mentors";
+import { sectionBlockPadding } from "../section-skeleton-parts";
 import { SectionHeader } from "../section-header";
 import { useInViewAnimation } from "../use-in-view-animation";
 
@@ -89,10 +90,9 @@ export default function Mentors() {
   }, [active, current]);
 
   return (
-    <section
+    <div
       ref={ref}
-      id="mentors"
-      className={`landing-section landing-section--animatable mx-auto w-full max-w-[1316px] shrink-0 py-20 sm:py-24${isActive ? " is-animating" : ""}`}
+      className={`landing-section landing-section--animatable mx-auto w-full max-w-[1316px] shrink-0 ${sectionBlockPadding}${isActive ? " is-animating" : ""}`}
     >
       <div className="mx-auto flex w-full min-w-0 flex-col items-center justify-center px-4 sm:px-6">
         <SectionHeader
@@ -203,6 +203,6 @@ export default function Mentors() {
           )}
         </DialogContent>
       </Dialog>
-    </section>
+    </div>
   );
 }

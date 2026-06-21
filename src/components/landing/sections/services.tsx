@@ -2,8 +2,15 @@ import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { debounce } from "@/lib/debounce";
-import { services, type Service } from "../data";
+import {
+  reInitCarouselAfterLayout,
+  useCarouselLatch,
+  whenCarouselViewportReady,
+} from "../carousel-layout";
+import { services, type Service } from "../data/services";
+import { sectionBlockPadding } from "../section-skeleton-parts";
 import { SectionHeader } from "../section-header";
+import { sectionAnchorClick } from "../section-nav";
 import { useInViewAnimation } from "../use-in-view-animation";
 
 function ServiceCard({ service, isActive }: { service: Service; isActive: boolean }) {
@@ -45,6 +52,7 @@ function ServiceCard({ service, isActive }: { service: Service; isActive: boolea
       </ul>
       <a
         href="#cta"
+        onClick={sectionAnchorClick("cta")}
         className={cn(
           "mt-6 w-full shrink-0 rounded-full px-6 py-3 text-center text-sm font-semibold transition-colors duration-300 sm:mt-8",
           isActive ? "btn-primary" : "btn-ghost-gold",
@@ -56,8 +64,11 @@ function ServiceCard({ service, isActive }: { service: Service; isActive: boolea
   );
 }
 
-export default function Services() {
-  const { ref, isActive } = useInViewAnimation<HTMLElement>();
+function ServicesCarouselShell() {
+  return <div className="services-carousel min-h-[41rem]" aria-hidden />;
+}
+
+function ServicesCarousel({ isInView }: { isInView: boolean }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     align: "center",
     containScroll: false,
@@ -84,16 +95,18 @@ export default function Services() {
   }, []);
 
   const syncCardHeight = useCallback(() => {
+    const viewport = carouselViewportRef.current;
+    if (!viewport || viewport.offsetWidth === 0) return;
+
     const cards = slideInnerRefs.current
       .map((inner) => inner?.firstElementChild)
       .filter((card): card is HTMLElement => card instanceof HTMLElement);
 
     if (!cards.length) return;
 
-    const viewport = carouselViewportRef.current;
     const slides = emblaApi?.slideNodes() ?? [];
 
-    viewport?.style.removeProperty("--services-card-height");
+    viewport.style.removeProperty("--services-card-height");
     slides.forEach((slide) => {
       slide.style.height = "auto";
     });
@@ -111,7 +124,7 @@ export default function Services() {
     });
 
     if (maxHeight > 0) {
-      viewport?.style.setProperty("--services-card-height", `${maxHeight}px`);
+      viewport.style.setProperty("--services-card-height", `${maxHeight}px`);
     }
   }, [emblaApi]);
 
@@ -119,7 +132,7 @@ export default function Services() {
     if (!emblaApi) return;
 
     const viewport = emblaApi.containerNode().parentElement;
-    if (!viewport) return;
+    if (!viewport || viewport.offsetWidth === 0) return;
 
     const viewportRect = viewport.getBoundingClientRect();
     const center = viewportRect.left + viewportRect.width / 2;
@@ -147,19 +160,11 @@ export default function Services() {
     });
   }, [emblaApi]);
 
-  const scheduleSlideTransforms = useCallback(() => {
-    if (rafRef.current !== null) return;
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null;
-      applySlideTransforms();
-    });
-  }, [applySlideTransforms]);
-
   const commitActiveIndex = useCallback(() => {
     if (!emblaApi) return;
 
     const viewport = emblaApi.containerNode().parentElement;
-    if (!viewport) return;
+    if (!viewport || viewport.offsetWidth === 0) return;
 
     const viewportRect = viewport.getBoundingClientRect();
     const center = viewportRect.left + viewportRect.width / 2;
@@ -183,40 +188,50 @@ export default function Services() {
     }
   }, [emblaApi]);
 
+  const scheduleScrollFrame = useCallback(() => {
+    if (rafRef.current !== null) return;
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null;
+      applySlideTransforms();
+      commitActiveIndex();
+    });
+  }, [applySlideTransforms, commitActiveIndex]);
+
+  const runLayout = useCallback(() => {
+    syncCardHeight();
+    applySlideTransforms();
+    commitActiveIndex();
+  }, [syncCardHeight, applySlideTransforms, commitActiveIndex]);
+
   useEffect(() => {
     if (!emblaApi) return;
 
-    const debouncedLayout = debounce(() => {
-      syncCardHeight();
-      applySlideTransforms();
-    }, 150);
+    const debouncedLayout = debounce(runLayout, 150);
 
     const onScroll = () => {
       if (!isScrollingRef.current) {
         isScrollingRef.current = true;
         setWillChange(true);
       }
-      scheduleSlideTransforms();
+      scheduleScrollFrame();
     };
 
     const onSettle = () => {
       isScrollingRef.current = false;
       setWillChange(false);
-      commitActiveIndex();
-      syncCardHeight();
-      applySlideTransforms();
+      runLayout();
     };
 
     emblaApi.on("scroll", onScroll);
     emblaApi.on("reInit", debouncedLayout);
     emblaApi.on("settle", onSettle);
-    syncCardHeight();
-    applySlideTransforms();
-    commitActiveIndex();
+
+    const cancelReady = whenCarouselViewportReady(carouselViewportRef.current, runLayout);
 
     window.addEventListener("resize", debouncedLayout);
 
     return () => {
+      cancelReady();
       emblaApi.off("scroll", onScroll);
       emblaApi.off("reInit", debouncedLayout);
       emblaApi.off("settle", onSettle);
@@ -226,14 +241,12 @@ export default function Services() {
         rafRef.current = null;
       }
     };
-  }, [
-    emblaApi,
-    syncCardHeight,
-    applySlideTransforms,
-    scheduleSlideTransforms,
-    commitActiveIndex,
-    setWillChange,
-  ]);
+  }, [emblaApi, runLayout, scheduleScrollFrame, setWillChange]);
+
+  useEffect(() => {
+    if (!isInView || !emblaApi) return;
+    return reInitCarouselAfterLayout(emblaApi, carouselViewportRef.current);
+  }, [isInView, emblaApi]);
 
   useEffect(() => {
     const viewport = carouselViewportRef.current;
@@ -267,10 +280,60 @@ export default function Services() {
   }, [emblaApi]);
 
   return (
-    <section
+    <div className="services-carousel" role="region" aria-roledescription="carousel" aria-label="Тарифы">
+      <div
+        ref={(node) => {
+          carouselViewportRef.current = node;
+          emblaRef(node);
+        }}
+        className="services-carousel__viewport"
+      >
+        <div className="services-carousel__track">
+          {services.map((s, index) => (
+            <div key={s.id} className="services-carousel__slide" role="group" aria-roledescription="slide">
+              <div
+                ref={(el) => {
+                  slideInnerRefs.current[index] = el;
+                }}
+                className="services-carousel__slide-inner"
+              >
+                {s.badge && index === activeIndex && (
+                  <div className="services-carousel__badge">{s.badge}</div>
+                )}
+                <ServiceCard service={s} isActive={index === activeIndex} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="services-carousel__dots" role="tablist" aria-label="Выбор тарифа">
+        {services.map((s, index) => (
+          <button
+            key={s.id}
+            type="button"
+            role="tab"
+            aria-selected={index === activeIndex}
+            aria-label={`${s.name}: ${s.tagline}`}
+            onClick={() => emblaApi?.scrollTo(index)}
+            className={cn(
+              "services-carousel__dot",
+              index === activeIndex && "services-carousel__dot--active",
+            )}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function Services() {
+  const { ref, isActive } = useInViewAnimation<HTMLElement>();
+  const carouselEnabled = useCarouselLatch(isActive);
+
+  return (
+    <div
       ref={ref}
-      id="services"
-      className={`landing-section landing-section--animatable shrink-0 py-20 sm:py-24${isActive ? " is-animating" : ""}`}
+      className={`landing-section landing-section--animatable shrink-0 ${sectionBlockPadding}${isActive ? " is-animating" : ""}`}
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
@@ -282,53 +345,11 @@ export default function Services() {
           }
           subtitle="Три формата работы — от разовой консультации до полного сопровождения до оффера."
         />
-        <div className="services-carousel" role="region" aria-roledescription="carousel" aria-label="Тарифы">
-          <div
-            ref={(node) => {
-              carouselViewportRef.current = node;
-              emblaRef(node);
-            }}
-            className="services-carousel__viewport"
-          >
-            <div className="services-carousel__track">
-              {services.map((s, index) => (
-                <div key={s.id} className="services-carousel__slide" role="group" aria-roledescription="slide">
-                  <div
-                    ref={(el) => {
-                      slideInnerRefs.current[index] = el;
-                    }}
-                    className="services-carousel__slide-inner"
-                  >
-                    {s.badge && index === activeIndex && (
-                      <div className="services-carousel__badge">{s.badge}</div>
-                    )}
-                    <ServiceCard service={s} isActive={index === activeIndex} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="services-carousel__dots" role="tablist" aria-label="Выбор тарифа">
-            {services.map((s, index) => (
-              <button
-                key={s.id}
-                type="button"
-                role="tab"
-                aria-selected={index === activeIndex}
-                aria-label={`${s.name}: ${s.tagline}`}
-                onClick={() => emblaApi?.scrollTo(index)}
-                className={cn(
-                  "services-carousel__dot",
-                  index === activeIndex && "services-carousel__dot--active",
-                )}
-              />
-            ))}
-          </div>
-        </div>
+        {carouselEnabled ? <ServicesCarousel isInView={isActive} /> : <ServicesCarouselShell />}
         <p className="mt-8 text-center text-xs text-muted-foreground">
           Точная стоимость подбирается под ваш уровень и цели на бесплатном разборе.
         </p>
       </div>
-    </section>
+    </div>
   );
 }

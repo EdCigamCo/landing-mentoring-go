@@ -1,13 +1,13 @@
+import { sectionBlockPadding } from "../section-skeleton-parts";
 import { useInViewAnimation } from "../use-in-view-animation";
 
 export default function CTA() {
   const { ref, isActive } = useInViewAnimation<HTMLElement>();
 
   return (
-    <section
+    <div
       ref={ref}
-      id="cta"
-      className={`landing-section landing-section--animatable shrink-0 px-4 py-20 sm:px-6 sm:py-24${isActive ? " is-animating" : ""}`}
+      className={`landing-section landing-section--animatable shrink-0 px-4 sm:px-6 ${sectionBlockPadding}${isActive ? " is-animating" : ""}`}
     >
       <div className="surface-card relative mx-auto max-w-5xl overflow-hidden rounded-3xl p-7 sm:p-10 md:p-16">
         <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-gold/20 blur-2xl" />
@@ -41,6 +41,6 @@ export default function CTA() {
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

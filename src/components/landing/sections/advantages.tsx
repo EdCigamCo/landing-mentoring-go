@@ -1,4 +1,5 @@
-import { advantages } from "../data";
+import { advantages } from "../data/advantages";
+import { sectionBlockPadding } from "../section-skeleton-parts";
 import { SectionHeader } from "../section-header";
 import { useInViewAnimation } from "../use-in-view-animation";
 
@@ -6,10 +7,9 @@ export default function Advantages() {
   const { ref, isActive } = useInViewAnimation<HTMLElement>();
 
   return (
-    <section
+    <div
       ref={ref}
-      id="advantages"
-      className={`landing-section landing-section--animatable shrink-0 py-20 sm:py-24${isActive ? " is-animating" : ""}`}
+      className={`landing-section landing-section--animatable shrink-0 ${sectionBlockPadding}${isActive ? " is-animating" : ""}`}
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader
@@ -31,6 +31,6 @@ export default function Advantages() {
           ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 }

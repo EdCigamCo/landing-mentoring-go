@@ -1,4 +1,4 @@
-import { edcigamLogoNav } from "./data";
+import { edcigamLogoNav } from "./data/images/brand";
 
 export function Logo({ className = "" }: { className?: string }) {
   return (

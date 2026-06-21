@@ -1,4 +1,5 @@
-import { faq } from "../data";
+import { faq } from "../data/faq";
+import { sectionBlockPadding } from "../section-skeleton-parts";
 import { SectionHeader } from "../section-header";
 import { useInViewAnimation } from "../use-in-view-animation";
 
@@ -6,10 +7,9 @@ export default function FAQ() {
   const { ref, isActive } = useInViewAnimation<HTMLElement>();
 
   return (
-    <section
+    <div
       ref={ref}
-      id="faq"
-      className={`landing-section landing-section--animatable shrink-0 py-20 sm:py-24${isActive ? " is-animating" : ""}`}
+      className={`landing-section landing-section--animatable shrink-0 ${sectionBlockPadding}${isActive ? " is-animating" : ""}`}
     >
       <div className="mx-auto max-w-3xl px-4 sm:px-6">
         <SectionHeader
@@ -34,6 +34,6 @@ export default function FAQ() {
           ))}
         </div>
       </div>
-    </section>
+    </div>
   );
 }

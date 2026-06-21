@@ -1,15 +1,16 @@
-import { program } from "../data";
+import { program } from "../data/program";
+import { sectionBlockPadding } from "../section-skeleton-parts";
 import { SectionHeader } from "../section-header";
+import { sectionAnchorClick } from "../section-nav";
 import { useInViewAnimation } from "../use-in-view-animation";
 
 export default function Program() {
   const { ref, isActive } = useInViewAnimation<HTMLElement>();
 
   return (
-    <section
+    <div
       ref={ref}
-      id="program"
-      className={`landing-section landing-section--animatable shrink-0 py-20 sm:py-24${isActive ? " is-animating" : ""}`}
+      className={`landing-section landing-section--animatable shrink-0 ${sectionBlockPadding}${isActive ? " is-animating" : ""}`}
     >
       <div className="landing-section__bg bg-gradient-to-b from-transparent via-surface/40 to-transparent" />
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -34,11 +35,11 @@ export default function Program() {
           ))}
         </div>
         <div className="mt-12 flex justify-center">
-          <a href="#cta" className="btn-primary rounded-full px-7 py-3.5 text-sm font-semibold">
+          <a href="#cta" onClick={sectionAnchorClick("cta")} className="btn-primary rounded-full px-7 py-3.5 text-sm font-semibold">
             Получить персональный план
           </a>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

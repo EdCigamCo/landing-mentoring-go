@@ -9,7 +9,13 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { debounce } from "@/lib/debounce";
-import { reviews, type Review } from "../data";
+import {
+  reInitCarouselAfterLayout,
+  useCarouselLatch,
+  whenCarouselViewportReady,
+} from "../carousel-layout";
+import { reviews, type Review } from "../data/reviews";
+import { sectionBlockPadding } from "../section-skeleton-parts";
 import { SectionHeader } from "../section-header";
 import { useInViewAnimation } from "../use-in-view-animation";
 
@@ -70,10 +76,17 @@ const ReviewCard = forwardRef<HTMLElement, { review: Review; onRead: () => void 
   );
 });
 
-export default function Reviews() {
-  const { ref, isActive } = useInViewAnimation<HTMLElement>();
-  const [active, setActive] = useState<number | null>(null);
-  const current = active !== null ? reviews[active] : null;
+function ReviewsCarouselShell() {
+  return <div className="reviews-carousel mt-12 min-h-[14rem] sm:min-h-[26rem]" aria-hidden />;
+}
+
+function ReviewsCarousel({
+  isInView,
+  onReadReview,
+}: {
+  isInView: boolean;
+  onReadReview: (index: number) => void;
+}) {
   const pageSize = useReviewPageSize();
   const pages = useMemo(
     () => chunkItems(reviews.map((review, index) => ({ review, index })), pageSize),
@@ -94,7 +107,8 @@ export default function Reviews() {
 
   const syncVisibleCardHeights = useCallback(() => {
     const api = emblaApiRef.current;
-    if (!api) return;
+    const viewport = carouselViewportRef.current;
+    if (!api || !viewport || viewport.offsetWidth === 0) return;
 
     const selected = api.selectedScrollSnap();
     const slide = api.slideNodes()[selected];
@@ -106,8 +120,7 @@ export default function Reviews() {
 
     if (!cards.length) return;
 
-    const viewport = carouselViewportRef.current;
-    viewport?.style.removeProperty("--reviews-card-height");
+    viewport.style.removeProperty("--reviews-card-height");
     cards.forEach((card) => {
       card.style.height = "auto";
     });
@@ -115,7 +128,7 @@ export default function Reviews() {
     const maxHeight = Math.max(...cards.map((card) => card.scrollHeight));
 
     if (maxHeight > 0) {
-      viewport?.style.setProperty("--reviews-card-height", `${maxHeight}px`);
+      viewport.style.setProperty("--reviews-card-height", `${maxHeight}px`);
       cards.forEach((card) => {
         card.style.height = `${maxHeight}px`;
       });
@@ -146,12 +159,6 @@ export default function Reviews() {
 
   useEffect(() => {
     if (!emblaApi) return;
-    const timer = window.setTimeout(() => emblaApi.reInit(), 0);
-    return () => clearTimeout(timer);
-  }, [emblaApi, pages]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
 
     const debouncedLayout = debounce(() => {
       syncVisibleCardHeights();
@@ -159,16 +166,27 @@ export default function Reviews() {
 
     emblaApi.on("reInit", debouncedLayout);
     emblaApi.on("settle", syncVisibleCardHeights);
-    syncVisibleCardHeights();
+
+    const cancelReady = whenCarouselViewportReady(carouselViewportRef.current, () => {
+      emblaApi.reInit();
+      syncVisibleCardHeights();
+      updateScrollState();
+    });
 
     window.addEventListener("resize", debouncedLayout);
 
     return () => {
+      cancelReady();
       emblaApi.off("reInit", debouncedLayout);
       emblaApi.off("settle", syncVisibleCardHeights);
       window.removeEventListener("resize", debouncedLayout);
     };
-  }, [emblaApi, syncVisibleCardHeights, pages, pageSize]);
+  }, [emblaApi, syncVisibleCardHeights, updateScrollState, pages, pageSize]);
+
+  useEffect(() => {
+    if (!isInView || !emblaApi) return;
+    return reInitCarouselAfterLayout(emblaApi, carouselViewportRef.current);
+  }, [isInView, emblaApi]);
 
   const progressLabel =
     pageSize === 1
@@ -178,10 +196,104 @@ export default function Reviews() {
   const progressPercent = pages.length <= 1 ? 100 : (selectedIndex / (pages.length - 1)) * 100;
 
   return (
-    <section
+    <div
+      key={pageSize}
+      className="reviews-carousel"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Отзывы выпускников"
+    >
+      <div className="reviews-carousel__stage">
+        <button
+          type="button"
+          className="reviews-carousel__arrow reviews-carousel__arrow--prev"
+          aria-label="Предыдущие отзывы"
+          disabled={!canScrollPrev}
+          onClick={() => emblaApi?.scrollPrev()}
+        >
+          <ChevronLeft className="h-5 w-5" aria-hidden />
+        </button>
+        <div
+          ref={(node) => {
+            carouselViewportRef.current = node;
+            emblaRef(node);
+          }}
+          className="reviews-carousel__viewport"
+        >
+          <div className="reviews-carousel__track">
+            {pages.map((page, pageIndex) => (
+              <div
+                key={pageIndex}
+                className="reviews-carousel__slide"
+                role="group"
+                aria-roledescription="slide"
+                aria-label={`Страница ${pageIndex + 1} из ${pages.length}`}
+              >
+                <div className="reviews-carousel__grid">
+                  {Array.from({ length: pageSize }).map((_, slotIndex) => {
+                    const item = page[slotIndex];
+
+                    if (!item) {
+                      return (
+                        <div
+                          key={`placeholder-${pageIndex}-${slotIndex}`}
+                          className="reviews-carousel__placeholder"
+                          aria-hidden
+                        />
+                      );
+                    }
+
+                    return (
+                      <ReviewCard
+                        key={item.review.name}
+                        ref={(node) => {
+                          reviewCardRefs.current[item.index] = node;
+                        }}
+                        review={item.review}
+                        onRead={() => onReadReview(item.index)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <button
+          type="button"
+          className="reviews-carousel__arrow reviews-carousel__arrow--next"
+          aria-label="Следующие отзывы"
+          disabled={!canScrollNext}
+          onClick={() => emblaApi?.scrollNext()}
+        >
+          <ChevronRight className="h-5 w-5" aria-hidden />
+        </button>
+      </div>
+      <div className="reviews-carousel__progress" role="group" aria-label="Прогресс просмотра отзывов">
+        <div className="reviews-carousel__progress-track" aria-hidden>
+          <div className="reviews-carousel__progress-fill" style={{ width: `${progressPercent}%` }} />
+        </div>
+        <div className="reviews-carousel__progress-meta">
+          <span>{progressLabel}</span>
+          <span>
+            {selectedIndex + 1} / {pages.length}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Reviews() {
+  const { ref, isActive } = useInViewAnimation<HTMLElement>();
+  const carouselEnabled = useCarouselLatch(isActive);
+  const [active, setActive] = useState<number | null>(null);
+  const current = active !== null ? reviews[active] : null;
+
+  return (
+    <div
       ref={ref}
-      id="reviews"
-      className={`landing-section landing-section--animatable shrink-0 py-20 sm:py-24${isActive ? " is-animating" : ""}`}
+      className={`landing-section landing-section--animatable shrink-0 ${sectionBlockPadding}${isActive ? " is-animating" : ""}`}
     >
       <div className="landing-section__bg bg-gradient-to-b from-transparent via-surface/30 to-transparent" />
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
@@ -194,91 +306,11 @@ export default function Reviews() {
           }
           subtitle="Истории учеников, которые прошли путь до оффера вместе с нами."
         />
-        <div
-          key={pageSize}
-          className="reviews-carousel"
-          role="region"
-          aria-roledescription="carousel"
-          aria-label="Отзывы выпускников"
-        >
-          <div className="reviews-carousel__stage">
-            <button
-              type="button"
-              className="reviews-carousel__arrow reviews-carousel__arrow--prev"
-              aria-label="Предыдущие отзывы"
-              disabled={!canScrollPrev}
-              onClick={() => emblaApi?.scrollPrev()}
-            >
-              <ChevronLeft className="h-5 w-5" aria-hidden />
-            </button>
-            <div
-              ref={(node) => {
-                carouselViewportRef.current = node;
-                emblaRef(node);
-              }}
-              className="reviews-carousel__viewport"
-            >
-              <div className="reviews-carousel__track">
-                {pages.map((page, pageIndex) => (
-                  <div
-                    key={pageIndex}
-                    className="reviews-carousel__slide"
-                    role="group"
-                    aria-roledescription="slide"
-                    aria-label={`Страница ${pageIndex + 1} из ${pages.length}`}
-                  >
-                    <div className="reviews-carousel__grid">
-                      {Array.from({ length: pageSize }).map((_, slotIndex) => {
-                        const item = page[slotIndex];
-
-                        if (!item) {
-                          return (
-                            <div
-                              key={`placeholder-${pageIndex}-${slotIndex}`}
-                              className="reviews-carousel__placeholder"
-                              aria-hidden
-                            />
-                          );
-                        }
-
-                        return (
-                          <ReviewCard
-                            key={item.review.name}
-                            ref={(node) => {
-                              reviewCardRefs.current[item.index] = node;
-                            }}
-                            review={item.review}
-                            onRead={() => setActive(item.index)}
-                          />
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <button
-              type="button"
-              className="reviews-carousel__arrow reviews-carousel__arrow--next"
-              aria-label="Следующие отзывы"
-              disabled={!canScrollNext}
-              onClick={() => emblaApi?.scrollNext()}
-            >
-              <ChevronRight className="h-5 w-5" aria-hidden />
-            </button>
-          </div>
-          <div className="reviews-carousel__progress" role="group" aria-label="Прогресс просмотра отзывов">
-            <div className="reviews-carousel__progress-track" aria-hidden>
-              <div className="reviews-carousel__progress-fill" style={{ width: `${progressPercent}%` }} />
-            </div>
-            <div className="reviews-carousel__progress-meta">
-              <span>{progressLabel}</span>
-              <span>
-                {selectedIndex + 1} / {pages.length}
-              </span>
-            </div>
-          </div>
-        </div>
+        {carouselEnabled ? (
+          <ReviewsCarousel isInView={isActive} onReadReview={setActive} />
+        ) : (
+          <ReviewsCarouselShell />
+        )}
       </div>
 
       <Dialog open={active !== null} onOpenChange={(o) => !o && setActive(null)}>
@@ -303,6 +335,6 @@ export default function Reviews() {
           )}
         </DialogContent>
       </Dialog>
-    </section>
+    </div>
   );
 }
