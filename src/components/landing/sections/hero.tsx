@@ -1,17 +1,17 @@
 import { preload } from "react-dom";
-import { edcigamLogo, heroBg } from "../data";
+import { heroBg, heroGofer } from "../data";
 import { useInViewAnimation } from "../use-in-view-animation";
 
 export function Hero() {
   preload(heroBg, { as: "image", fetchPriority: "high" });
-  preload(edcigamLogo, { as: "image", fetchPriority: "high" });
+  preload(heroGofer, { as: "image", fetchPriority: "high" });
 
   const { ref, isActive } = useInViewAnimation<HTMLElement>();
 
   return (
     <section
       ref={ref}
-      className={`landing-section landing-section--animatable relative shrink-0 overflow-hidden${isActive ? " is-animating" : ""}`}
+      className={`landing-section landing-section--animatable relative shrink-0 overflow-visible${isActive ? " is-animating" : ""}`}
     >
       <div
         className="absolute inset-0 -z-10 opacity-60"
@@ -54,17 +54,19 @@ export function Hero() {
             ))}
           </dl>
         </div>
-        <div className="relative min-w-0 w-full">
-          <div className="absolute -inset-8 -z-10 rounded-full bg-gold/10 blur-2xl" />
+        <div className="relative flex min-w-0 w-full justify-center overflow-visible">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gold/15 blur-2xl sm:h-64 sm:w-64 md:h-72 md:w-72"
+          />
           <img
-            src={edcigamLogo}
-            alt="EdCigamCo logo"
+            src={heroGofer}
+            alt="Go gopher"
             width={640}
             height={640}
             fetchPriority="high"
             decoding="async"
-            className="mx-auto w-full rounded-2xl object-cover ring-1 ring-border"
-            style={{ boxShadow: "0 30px 80px -30px rgba(0,0,0,0.7)" }}
+            className="relative z-10 mx-auto w-full max-w-[220px] object-contain sm:max-w-[260px] md:max-w-[280px]"
           />
         </div>
       </div>

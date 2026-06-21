@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Landing } from "@/components/landing/landing";
 import { edcigamLogo } from "@/components/landing/data";
+import favicon from "@/assets/edcigam-logo.ico?url";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -22,6 +23,7 @@ export const Route = createFileRoute("/")({
       { name: "twitter:title", content: "EdCigamCo · Мастерская Go" },
       { name: "twitter:image", content: edcigamLogo },
     ],
+    links: [{ rel: "icon", href: favicon, type: "image/x-icon" }],
   }),
   component: Landing,
 });

@@ -1,10 +1,11 @@
 import edcigamLogo from "../../assets/edcigam-logo.jpg?w=1280&format=webp&quality=82";
 import edcigamLogoNav from "../../assets/edcigam-logo.jpg?w=80&format=webp&quality=85";
+import heroGofer from "../../assets/Gofer.png?w=1280&format=webp&quality=82";
 import mentor1 from "../../assets/mentor-1.jpg?w=800&format=webp&quality=80";
 import mentor2 from "../../assets/mentor-2.jpg?w=800&format=webp&quality=80";
 import heroBg from "../../assets/hero-bg.jpg?w=1920&format=webp&quality=80";
 
-export { edcigamLogo, edcigamLogoNav, heroBg };
+export { edcigamLogo, edcigamLogoNav, heroBg, heroGofer };
 
 export const navLinks = [
   { href: "#advantages", label: "Преимущества", sectionId: "advantages" as const },
