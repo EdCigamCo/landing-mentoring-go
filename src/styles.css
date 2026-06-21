@@ -274,6 +274,24 @@
   }
   .animate-float-soft { animation: float-soft 6s ease-in-out infinite; }
 
+  .landing {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .landing input,
+  .landing textarea,
+  .landing [contenteditable="true"] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  .landing-dialog,
+  .mentor-dialog {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
   .landing-section {
     position: relative;
     isolation: isolate;
@@ -353,7 +371,6 @@
 
   #services .services-carousel__card {
     overflow: hidden;
-    user-select: none;
   }
 
   #services .services-carousel__card.surface-card-hover:hover,

@@ -1145,7 +1145,7 @@ function Reviews() {
       </div>
 
       <Dialog open={active !== null} onOpenChange={(o) => !o && setActive(null)}>
-        <DialogContent className="max-w-2xl border-border/60 bg-card">
+        <DialogContent className="landing-dialog max-w-2xl border-border/60 bg-card">
           {current && (
             <>
               <DialogHeader className="text-left">
@@ -1282,7 +1282,7 @@ function Landing() {
   // suppress unused import warning under strict TS
   useEffect(() => {}, []);
   return (
-    <div className="min-h-screen overflow-x-clip">
+    <div className="landing min-h-screen overflow-x-clip">
       <Nav />
       <main className="flex flex-col">
         <Hero />
