@@ -1,9 +1,11 @@
 @import "@fontsource-variable/manrope/wght.css";
 @import "@fontsource-variable/unbounded/wght.css";
-@import "@fontsource/jetbrains-mono/400.css";
-@import "@fontsource/jetbrains-mono/500.css";
 @import "tailwindcss" source(none);
-@source "../src";
+@source "../src/components/landing";
+@source "../src/routes";
+@source "../src/components/ui/dialog.tsx";
+@source "../src/components/ui/sheet.tsx";
+@source "../src/routes/__root.tsx";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -219,7 +221,7 @@
       #3f93d8 60%,
       #7eb8e8 100%
     );
-    filter: drop-shadow(0 0 8px rgba(106, 178, 240, 0.35));
+    text-shadow: 0 0 8px rgba(106, 178, 240, 0.35);
     letter-spacing: -0.01em;
   }
   .brand-glass-heading {
@@ -242,8 +244,14 @@
     );
     background-size: 200% 100%;
     letter-spacing: -0.01em;
-    filter: drop-shadow(0 0 12px rgba(106, 178, 240, 0.5));
+    text-shadow: 0 0 12px rgba(106, 178, 240, 0.5);
     animation: brand-glass-heading-shimmer 1.5s linear infinite;
+    animation-play-state: paused;
+  }
+
+  .brand-glass-heading--always,
+  .landing-section--animatable.is-animating .brand-glass-heading {
+    animation-play-state: running;
   }
 
   @keyframes brand-glass-heading-shimmer {
@@ -258,15 +266,33 @@
   @media (prefers-reduced-motion: reduce) {
     .brand-glass-heading {
       animation: none;
-      filter: drop-shadow(0 0 12px rgba(106, 178, 240, 0.48));
+      text-shadow: 0 0 12px rgba(106, 178, 240, 0.48);
     }
   }
 
   @keyframes marquee {
-    from { transform: translateX(0); }
-    to { transform: translateX(-50%); }
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(-50%, 0, 0); }
   }
-  .animate-marquee { animation: marquee 40s linear infinite; }
+  .animate-marquee {
+    animation: marquee 40s linear infinite;
+    animation-play-state: paused;
+    will-change: transform;
+  }
+
+  .landing-section--animatable.is-animating .animate-marquee {
+    animation-play-state: running;
+  }
+
+  .landing-header {
+    background-color: oklch(0.16 0.005 240 / 0.92);
+  }
+
+  @media (min-width: 768px) {
+    .landing-header {
+      background-color: oklch(0.16 0.005 240 / 0.7);
+    }
+  }
 
   @keyframes float-soft {
     0%, 100% { transform: translateY(0); }
@@ -345,6 +371,9 @@
     height: 100%;
     overflow: visible;
     transform-origin: center top;
+  }
+
+  #services .services-carousel__slide-inner--scrolling {
     will-change: transform, opacity;
   }
 
