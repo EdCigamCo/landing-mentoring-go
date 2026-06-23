@@ -15,14 +15,14 @@ export function Hero() {
       className={`landing-section landing-section--animatable relative shrink-0 overflow-visible${isActive ? " is-animating" : ""}`}
     >
       <div
-        className="absolute inset-0 -z-10 opacity-60"
+        className="hero-bg absolute inset-0 -z-10 opacity-60"
         style={{
           backgroundImage: `url(${heroBg})`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
       />
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-background/40 via-background/70 to-background" />
+      <div className="hero-overlay absolute inset-0 -z-10" />
       <div className="mx-auto grid max-w-6xl grid-cols-1 gap-10 px-4 py-16 sm:px-6 sm:py-20 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] md:items-center md:gap-12 md:py-28 lg:py-32">
         <div className="min-w-0">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-surface/60 px-4 py-1.5 text-[10px] uppercase tracking-[0.2em] text-muted-foreground sm:text-xs">

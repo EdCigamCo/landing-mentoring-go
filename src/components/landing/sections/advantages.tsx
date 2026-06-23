@@ -9,7 +9,7 @@ export default function Advantages() {
   return (
     <div
       ref={ref}
-      className={`landing-section landing-section--animatable shrink-0 ${sectionBlockPadding}${isActive ? " is-animating" : ""}`}
+      className={`landing-section--animatable shrink-0 ${sectionBlockPadding}${isActive ? " is-animating" : ""}`}
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <SectionHeader

@@ -110,9 +110,6 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
-    background-image:
-      radial-gradient(ellipse 60% 50% at 50% 0%, oklch(0.72 0.12 240 / 0.1), transparent 60%),
-      radial-gradient(ellipse 40% 40% at 90% 30%, oklch(0.65 0.14 240 / 0.06), transparent 70%);
   }
   h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
 }
@@ -206,6 +203,22 @@
     background-color: oklch(0.22 0.007 240 / 0.55);
   }
   .hairline { border-top: 1px solid oklch(0.35 0.008 240 / 0.4); }
+
+  .hero-bg {
+    -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+  }
+
+  .hero-overlay {
+    background: linear-gradient(
+      in oklch,
+      oklch(0.16 0.005 240 / 0.55) 0%,
+      oklch(0.16 0.005 240 / 0.25) 45%,
+      transparent 100%
+    );
+  }
 
   .brand-glass {
     font-family: var(--font-display);
@@ -305,6 +318,10 @@
   .landing {
     -webkit-user-select: none;
     user-select: none;
+    background-color: var(--color-background);
+    background-image:
+      radial-gradient(ellipse 60% 50% at 50% 0%, oklch(0.72 0.12 240 / 0.1), transparent 60%),
+      radial-gradient(ellipse 40% 40% at 90% 30%, oklch(0.65 0.14 240 / 0.06), transparent 70%);
   }
 
   .landing input,
