@@ -303,6 +303,27 @@
     background-color: oklch(0.16 0.005 240 / 0.92);
   }
 
+  .landing-header__progress {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    height: 2px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+
+  .landing-header__progress.is-active {
+    opacity: 1;
+  }
+
+  .landing-header__progress-bar {
+    height: 100%;
+    background: var(--gradient-edcigam);
+    box-shadow: 0 0 8px oklch(0.72 0.13 70 / 0.45);
+    transition: width 200ms ease-out;
+  }
+
   @media (min-width: 768px) {
     .landing-header {
       background-color: oklch(0.16 0.005 240 / 0.7);

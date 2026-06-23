@@ -19,10 +19,85 @@ const HEIGHT_STABLE_TIMEOUT_MS = 2000;
 const SCROLL_CORRECTION_MS = 300;
 const SCROLL_CORRECTION_MOUNTED_MS = 150;
 const IDLE_PREFETCH_BATCH_SIZE = 3;
+const NAV_PROGRESS_SHOW_DELAY_MS = 80;
+const NAV_PROGRESS_HIDE_DELAY_MS = 200;
+
+export type NavigationProgress = {
+  visible: boolean;
+  progress: number;
+  targetId: SectionId | null;
+};
 
 let queue: QueueItem[] = [];
 let idleHandle: number | null = null;
 let started = false;
+
+let navigationGeneration = 0;
+let navigationProgress: NavigationProgress = { visible: false, progress: 0, targetId: null };
+const navigationProgressListeners = new Set<(state: NavigationProgress) => void>();
+let navProgressShowTimer: number | null = null;
+let navProgressHideTimer: number | null = null;
+let navProgressShowFired = false;
+
+function emitNavigationProgress(partial: Partial<NavigationProgress>) {
+  navigationProgress = { ...navigationProgress, ...partial };
+  navigationProgressListeners.forEach((listener) => listener(navigationProgress));
+}
+
+function clearNavigationProgressTimers() {
+  if (navProgressShowTimer !== null) {
+    window.clearTimeout(navProgressShowTimer);
+    navProgressShowTimer = null;
+  }
+  if (navProgressHideTimer !== null) {
+    window.clearTimeout(navProgressHideTimer);
+    navProgressHideTimer = null;
+  }
+}
+
+function beginNavigationProgress(targetId: SectionId): number {
+  clearNavigationProgressTimers();
+  const generation = ++navigationGeneration;
+  navProgressShowFired = false;
+
+  emitNavigationProgress({ progress: 5, targetId, visible: false });
+
+  navProgressShowTimer = window.setTimeout(() => {
+    if (generation !== navigationGeneration) return;
+    navProgressShowFired = true;
+    emitNavigationProgress({ visible: true });
+  }, NAV_PROGRESS_SHOW_DELAY_MS);
+
+  return generation;
+}
+
+function updateNavigationProgress(generation: number, progress: number) {
+  if (generation !== navigationGeneration) return;
+  emitNavigationProgress({ progress: Math.min(progress, 95) });
+}
+
+function completeNavigationProgress(generation: number) {
+  if (generation !== navigationGeneration) return;
+  clearNavigationProgressTimers();
+
+  if (!navProgressShowFired) {
+    emitNavigationProgress({ visible: false, progress: 0, targetId: null });
+    return;
+  }
+
+  emitNavigationProgress({ progress: 100, visible: true });
+
+  navProgressHideTimer = window.setTimeout(() => {
+    if (generation !== navigationGeneration) return;
+    emitNavigationProgress({ visible: false, progress: 0, targetId: null });
+  }, NAV_PROGRESS_HIDE_DELAY_MS);
+}
+
+export function subscribeNavigationProgress(listener: (state: NavigationProgress) => void) {
+  navigationProgressListeners.add(listener);
+  listener(navigationProgress);
+  return () => navigationProgressListeners.delete(listener);
+}
 
 function prefetchChunk(id: SectionId, loader: () => Promise<unknown>): Promise<unknown> {
   if (loaded.has(id)) return Promise.resolve();
@@ -213,27 +288,40 @@ export async function ensureSectionReady(id: SectionId): Promise<void> {
 /** Загружает и монтирует все lazy-секции от начала каталога до target включительно. */
 export async function ensureScrollPathReady(
   targetId: SectionId,
+  onProgress?: (progress: number) => void,
 ): Promise<{ pathFullyMounted: boolean }> {
   const pathIds = getScrollPathIds(targetId);
   if (!pathIds.length) return { pathFullyMounted: false };
 
   const pathFullyMounted = isScrollPathMounted(pathIds);
+  const pathLength = pathIds.length;
 
   for (const id of pathIds) {
     boostSection(id);
   }
+
+  let sectionsReady = 0;
+  const reportSectionsProgress = () => {
+    onProgress?.(5 + (sectionsReady / pathLength) * 80);
+  };
+
+  reportSectionsProgress();
 
   await Promise.all(
     pathIds.map(async (id) => {
       const entry = sectionById[id];
       if (!entry) return;
       await Promise.all([prefetchChunk(id, entry.loader), waitForSectionMount(id)]);
+      sectionsReady += 1;
+      reportSectionsProgress();
     }),
   );
 
+  onProgress?.(88);
   await waitForLayoutStable();
 
   if (!pathFullyMounted) {
+    onProgress?.(92);
     await waitForElementsHeightStable(getPathElements(pathIds));
   }
 
@@ -246,11 +334,21 @@ export async function navigateToSection(
 ): Promise<void> {
   if (typeof window === "undefined") return;
 
-  const { pathFullyMounted } = await ensureScrollPathReady(id);
+  const generation = beginNavigationProgress(id);
 
-  const behavior = options.behavior ?? "smooth";
-  scrollSectionIntoView(id, behavior);
-  watchScrollCorrections(id, pathFullyMounted ? SCROLL_CORRECTION_MOUNTED_MS : SCROLL_CORRECTION_MS);
+  try {
+    const { pathFullyMounted } = await ensureScrollPathReady(id, (progress) => {
+      updateNavigationProgress(generation, progress);
+    });
+
+    updateNavigationProgress(generation, 98);
+
+    const behavior = options.behavior ?? "smooth";
+    scrollSectionIntoView(id, behavior);
+    watchScrollCorrections(id, pathFullyMounted ? SCROLL_CORRECTION_MOUNTED_MS : SCROLL_CORRECTION_MS);
+  } finally {
+    completeNavigationProgress(generation);
+  }
 }
 
 function scheduleIdle(fn: () => void) {

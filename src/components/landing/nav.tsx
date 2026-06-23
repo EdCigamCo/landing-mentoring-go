@@ -7,7 +7,9 @@ import {
   navigateToSection,
   prefetchNavSectionChunks,
   prioritizeSection,
+  subscribeNavigationProgress,
   subscribeSectionMounted,
+  type NavigationProgress,
 } from "./prefetch-sections";
 import { logoHomeClick, sectionIdFromHash } from "./section-nav";
 
@@ -19,6 +21,11 @@ export function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [useMenu, setUseMenu] = useState(true);
   const [activeSection, setActiveSection] = useState<SectionId | null>(null);
+  const [navProgress, setNavProgress] = useState<NavigationProgress>({
+    visible: false,
+    progress: 0,
+    targetId: null,
+  });
   const stickyHeaderRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const navMeasureRef = useRef<HTMLDivElement>(null);
@@ -34,6 +41,8 @@ export function Nav() {
     setMenuOpen(false);
     void navigateToSection(sectionId);
   }, []);
+
+  useEffect(() => subscribeNavigationProgress(setNavProgress), []);
 
   useEffect(() => {
     const header = stickyHeaderRef.current;
@@ -236,6 +245,15 @@ export function Nav() {
             </>
           )}
         </div>
+      </div>
+
+      <div
+        aria-hidden
+        className={["landing-header__progress", navProgress.visible ? "is-active" : ""]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        <div className="landing-header__progress-bar" style={{ width: `${navProgress.progress}%` }} />
       </div>
     </header>
   );
