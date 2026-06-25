@@ -11,7 +11,7 @@ import {
 import { debounce } from "@/lib/debounce";
 import {
   reInitCarouselAfterLayout,
-  useCarouselLatch,
+  useCarouselBoostLatch,
   whenCarouselViewportReady,
 } from "../carousel-layout";
 import { reviews, type Review } from "../data/reviews";
@@ -286,7 +286,7 @@ function ReviewsCarousel({
 
 export default function Reviews() {
   const { ref, isActive } = useInViewAnimation<HTMLElement>();
-  const carouselEnabled = useCarouselLatch(isActive);
+  const carouselEnabled = useCarouselBoostLatch("reviews", isActive);
   const [active, setActive] = useState<number | null>(null);
   const current = active !== null ? reviews[active] : null;
 

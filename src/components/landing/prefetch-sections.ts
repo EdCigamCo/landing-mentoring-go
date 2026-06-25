@@ -9,6 +9,7 @@ type QueueItem = {
 
 const loaded = new Set<SectionId>();
 const inflight = new Map<SectionId, Promise<unknown>>();
+const boostedSections = new Set<SectionId>();
 const boostListeners = new Set<(id: SectionId) => void>();
 const mountListeners = new Set<(id: SectionId) => void>();
 const mountedSections = new Set<SectionId>();
@@ -16,8 +17,13 @@ const mountWaiters = new Map<SectionId, Set<() => void>>();
 
 const HEIGHT_STABLE_DELAY_MS = 150;
 const HEIGHT_STABLE_TIMEOUT_MS = 2000;
-const SCROLL_CORRECTION_MS = 300;
-const SCROLL_CORRECTION_MOUNTED_MS = 150;
+const SCROLL_SETTLE_POLL_MS = 20;
+const SCROLL_SETTLE_STABLE_TICKS = 3;
+const SCROLL_CORRECTION_TIMEOUT_MS = 2000;
+
+/** Секции с отложенным layout (shell → carousel по inView). */
+const SECTIONS_WITH_DEFERRED_LAYOUT = new Set<SectionId>(["services", "reviews"]);
+const deferredLayoutReady = new Set<SectionId>();
 const IDLE_PREFETCH_BATCH_SIZE = 3;
 const NAV_PROGRESS_SHOW_DELAY_MS = 80;
 const NAV_PROGRESS_HIDE_DELAY_MS = 200;
@@ -114,6 +120,7 @@ function prefetchChunk(id: SectionId, loader: () => Promise<unknown>): Promise<u
 }
 
 function notifyBoost(id: SectionId) {
+  boostedSections.add(id);
   boostListeners.forEach((listener) => listener(id));
 }
 
@@ -126,6 +133,7 @@ function resolveMountWaiters(id: SectionId) {
 
 export function subscribeSectionBoost(listener: (id: SectionId) => void) {
   boostListeners.add(listener);
+  boostedSections.forEach((id) => listener(id));
   return () => boostListeners.delete(listener);
 }
 
@@ -172,6 +180,21 @@ function getPathElements(pathIds: SectionId[]): HTMLElement[] {
   return pathIds
     .map((id) => document.getElementById(id))
     .filter((node): node is HTMLElement => node instanceof HTMLElement);
+}
+
+function deferredLayoutPendingOnPath(pathIds: SectionId[]): boolean {
+  return pathIds.some((id) => SECTIONS_WITH_DEFERRED_LAYOUT.has(id) && !deferredLayoutReady.has(id));
+}
+
+function shouldWaitForPathHeightStable(pathIds: SectionId[], pathFullyMounted: boolean): boolean {
+  if (!pathFullyMounted) return true;
+  return deferredLayoutPendingOnPath(pathIds);
+}
+
+/** Карусель/shell → финальный layout (inView или navigation boost). */
+export function notifyDeferredLayoutReady(id: SectionId) {
+  if (!SECTIONS_WITH_DEFERRED_LAYOUT.has(id)) return;
+  deferredLayoutReady.add(id);
 }
 
 /** Chunk-only: качает JS без mount — безопасно для hover/focus/idle. */
@@ -243,28 +266,80 @@ function scrollSectionIntoView(id: SectionId, behavior: ScrollBehavior) {
   target.scrollIntoView({ behavior, block: "start" });
 }
 
+function getScrollCorrectionElements(pathIds: SectionId[]): HTMLElement[] {
+  const elements = getPathElements(pathIds);
+  const header = document.querySelector<HTMLElement>(".landing-header");
+  if (header) elements.push(header);
+  return elements;
+}
+
 /** Повторный scroll при поздних сдвигах layout на пути к якорю. */
-function watchScrollCorrections(targetId: SectionId, durationMs = SCROLL_CORRECTION_MS): void {
-  const elements = getPathElements(getScrollPathIds(targetId));
+function watchScrollCorrections(targetId: SectionId, generation: number): void {
+  const pathIds = getScrollPathIds(targetId);
+  const elements = getScrollCorrectionElements(pathIds);
   if (!elements.length) return;
 
   let rafId: number | null = null;
+  let pollTimer: number | null = null;
+  let maxTimer: number | null = null;
+  let stableTicks = 0;
+  let prevScrollY = window.scrollY;
+
+  const isActive = () => generation === navigationGeneration;
+
+  const cleanup = () => {
+    observer.disconnect();
+    if (rafId !== null) cancelAnimationFrame(rafId);
+    if (pollTimer !== null) window.clearTimeout(pollTimer);
+    if (maxTimer !== null) window.clearTimeout(maxTimer);
+  };
 
   const rescroll = () => {
+    if (!isActive()) return;
     if (rafId !== null) cancelAnimationFrame(rafId);
     rafId = requestAnimationFrame(() => {
       rafId = null;
+      if (!isActive()) return;
       scrollSectionIntoView(targetId, "auto");
+      stableTicks = 0;
+      prevScrollY = window.scrollY;
+      scheduleSettlePoll();
     });
+  };
+
+  const scheduleSettlePoll = () => {
+    if (!isActive()) return;
+    if (pollTimer !== null) window.clearTimeout(pollTimer);
+    pollTimer = window.setTimeout(() => {
+      pollTimer = null;
+      if (!isActive()) return;
+
+      const currentScrollY = window.scrollY;
+      if (currentScrollY === prevScrollY) {
+        stableTicks += 1;
+        if (stableTicks >= SCROLL_SETTLE_STABLE_TICKS) {
+          scrollSectionIntoView(targetId, "auto");
+          cleanup();
+          return;
+        }
+      } else {
+        stableTicks = 0;
+        prevScrollY = currentScrollY;
+      }
+
+      scheduleSettlePoll();
+    }, SCROLL_SETTLE_POLL_MS);
   };
 
   const observer = new ResizeObserver(rescroll);
   elements.forEach((element) => observer.observe(element));
 
-  window.setTimeout(() => {
-    observer.disconnect();
-    if (rafId !== null) cancelAnimationFrame(rafId);
-  }, durationMs);
+  scheduleSettlePoll();
+  maxTimer = window.setTimeout(() => {
+    if (!isActive()) return;
+    scrollSectionIntoView(targetId, "auto");
+    cleanup();
+  }, SCROLL_CORRECTION_TIMEOUT_MS);
 }
 
 export function boostSection(id: SectionId) {
@@ -320,7 +395,7 @@ export async function ensureScrollPathReady(
   onProgress?.(88);
   await waitForLayoutStable();
 
-  if (!pathFullyMounted) {
+  if (shouldWaitForPathHeightStable(pathIds, pathFullyMounted)) {
     onProgress?.(92);
     await waitForElementsHeightStable(getPathElements(pathIds));
   }
@@ -343,9 +418,9 @@ export async function navigateToSection(
 
     updateNavigationProgress(generation, 98);
 
-    const behavior = options.behavior ?? "smooth";
+    const behavior = options.behavior ?? (pathFullyMounted ? "smooth" : "auto");
     scrollSectionIntoView(id, behavior);
-    watchScrollCorrections(id, pathFullyMounted ? SCROLL_CORRECTION_MOUNTED_MS : SCROLL_CORRECTION_MS);
+    watchScrollCorrections(id, generation);
   } finally {
     completeNavigationProgress(generation);
   }

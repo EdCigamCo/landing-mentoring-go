@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-
+import { useEffect, useLayoutEffect, useState } from "react";
+import type { SectionId } from "./data/section-id";
+import { notifyDeferredLayoutReady, subscribeSectionBoost } from "./prefetch-sections";
 type EmblaApi = {
   reInit: () => void;
 };
@@ -11,6 +12,25 @@ export function useCarouselLatch(isInView: boolean) {
   useEffect(() => {
     if (isInView) setEnabled(true);
   }, [isInView]);
+
+  return enabled;
+}
+
+/** Карусель при inView или при navigation boost (scroll path). */
+export function useCarouselBoostLatch(sectionId: SectionId, isInView: boolean) {
+  const latched = useCarouselLatch(isInView);
+  const [boosted, setBoosted] = useState(false);
+  const enabled = boosted || latched;
+
+  useEffect(() => {
+    return subscribeSectionBoost((id) => {
+      if (id === sectionId) setBoosted(true);
+    });
+  }, [sectionId]);
+
+  useLayoutEffect(() => {
+    if (enabled) notifyDeferredLayoutReady(sectionId);
+  }, [enabled, sectionId]);
 
   return enabled;
 }

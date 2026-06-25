@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { debounce } from "@/lib/debounce";
 import {
   reInitCarouselAfterLayout,
-  useCarouselLatch,
+  useCarouselBoostLatch,
   whenCarouselViewportReady,
 } from "../carousel-layout";
 import { services, type Service } from "../data/services";
@@ -328,7 +328,7 @@ function ServicesCarousel({ isInView }: { isInView: boolean }) {
 
 export default function Services() {
   const { ref, isActive } = useInViewAnimation<HTMLElement>();
-  const carouselEnabled = useCarouselLatch(isActive);
+  const carouselEnabled = useCarouselBoostLatch("services", isActive);
 
   return (
     <div
