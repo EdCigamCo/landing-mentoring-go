@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Landing } from "@/components/landing/landing";
 import { edcigamLogo } from "@/components/landing/data/images/brand";
-import favicon from "@/assets/edcigam-logo.ico?url";
+import favicon from "@/assets/gofer.ico?url";
 
 export const Route = createFileRoute("/")({
   head: () => ({
