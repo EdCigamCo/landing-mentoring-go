@@ -27,12 +27,22 @@ export default function Companies() {
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-background to-transparent sm:w-24" />
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-background to-transparent sm:w-24" />
         <div className="animate-marquee flex w-max gap-4">
-          {row.map((c, i) => (
-            <div
-              key={`${c}-${i}`}
-              className="surface-card flex h-20 min-w-[180px] items-center justify-center rounded-xl px-8 sm:min-w-[200px]"
-            >
-              <span className="brand-glass brand-glass-text font-display text-lg tracking-wide">{c}</span>
+          {row.map((company, i) => (
+            <div key={`${company.name ?? company.logo}-${i}`} className="companies-marquee__card">
+              <div className="companies-marquee__plaque">
+                <div className="companies-marquee__plaque-content">
+                  {company.logo ? (
+                    <span
+                      className={`companies-marquee__logo${company.name ? "" : " companies-marquee__logo--wordmark"}`}
+                    >
+                      <img src={company.logo} alt="" loading="lazy" decoding="async" />
+                    </span>
+                  ) : null}
+                  {company.name ? (
+                    <span className="companies-marquee__plaque-name">{company.name}</span>
+                  ) : null}
+                </div>
+              </div>
             </div>
           ))}
         </div>
