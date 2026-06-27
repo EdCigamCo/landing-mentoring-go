@@ -17,7 +17,7 @@ function ServiceCard({ service, isActive }: { service: Service; isActive: boolea
   return (
     <div
       className={cn(
-        "@container surface-card surface-card-hover services-carousel__card relative flex h-full min-h-0 w-full flex-col rounded-2xl p-6 sm:p-8 transition-shadow duration-300",
+        "@container surface-card-hover services-carousel__card relative flex h-full min-h-0 w-full flex-col rounded-2xl p-6 sm:p-8 transition-shadow duration-300",
         isActive && "ring-2 ring-gold/70 services-carousel__card--active",
       )}
     >
@@ -81,25 +81,13 @@ function ServicesCarousel({ isInView }: { isInView: boolean }) {
   const activeIndexRef = useRef(1);
   const carouselViewportRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
-  const isScrollingRef = useRef(false);
-
-  const setWillChange = useCallback((enabled: boolean) => {
-    slideInnerRefs.current.forEach((inner) => {
-      if (!inner) return;
-      if (enabled) {
-        inner.classList.add("services-carousel__slide-inner--scrolling");
-      } else {
-        inner.classList.remove("services-carousel__slide-inner--scrolling");
-      }
-    });
-  }, []);
 
   const syncCardHeight = useCallback(() => {
     const viewport = carouselViewportRef.current;
     if (!viewport || viewport.offsetWidth === 0) return;
 
     const cards = slideInnerRefs.current
-      .map((inner) => inner?.firstElementChild)
+      .map((inner) => inner?.querySelector(".services-carousel__card"))
       .filter((card): card is HTMLElement => card instanceof HTMLElement);
 
     if (!cards.length) return;
@@ -139,7 +127,7 @@ function ServicesCarousel({ isInView }: { isInView: boolean }) {
 
     const activeRaise = -14;
     const inactiveLower = 22;
-    const inactiveOpacity = 0.82;
+    const offsetRange = inactiveLower - activeRaise;
 
     emblaApi.slideNodes().forEach((slide, index) => {
       const inner = slideInnerRefs.current[index];
@@ -150,13 +138,16 @@ function ServicesCarousel({ isInView }: { isInView: boolean }) {
       const offset = (slideCenter - center) / (slideRect.width || 1);
       const absOffset = Math.min(Math.abs(offset), 1);
       const activeProgress = Math.max(0, 1 - absOffset);
-      const translateY = inactiveLower - activeProgress * (inactiveLower - activeRaise);
-      const opacity = inactiveOpacity + activeProgress * (1 - inactiveOpacity);
       const zIndex = Math.round(10 + activeProgress * 20);
 
       slide.style.zIndex = String(zIndex);
-      inner.style.transform = `translate3d(0, ${translateY}px, 0)`;
-      inner.style.opacity = String(opacity);
+      inner.style.setProperty("--active-progress", String(activeProgress));
+      inner.style.setProperty(
+        "--slide-offset",
+        `${inactiveLower - activeProgress * offsetRange}px`,
+      );
+      inner.style.removeProperty("transform");
+      inner.style.removeProperty("opacity");
     });
   }, [emblaApi]);
 
@@ -209,16 +200,10 @@ function ServicesCarousel({ isInView }: { isInView: boolean }) {
     const debouncedLayout = debounce(runLayout, 150);
 
     const onScroll = () => {
-      if (!isScrollingRef.current) {
-        isScrollingRef.current = true;
-        setWillChange(true);
-      }
       scheduleScrollFrame();
     };
 
     const onSettle = () => {
-      isScrollingRef.current = false;
-      setWillChange(false);
       runLayout();
     };
 
@@ -241,43 +226,12 @@ function ServicesCarousel({ isInView }: { isInView: boolean }) {
         rafRef.current = null;
       }
     };
-  }, [emblaApi, runLayout, scheduleScrollFrame, setWillChange]);
+  }, [emblaApi, runLayout, scheduleScrollFrame]);
 
   useEffect(() => {
     if (!isInView || !emblaApi) return;
     return reInitCarouselAfterLayout(emblaApi, carouselViewportRef.current);
   }, [isInView, emblaApi]);
-
-  useEffect(() => {
-    const viewport = carouselViewportRef.current;
-    if (!viewport || !emblaApi) return;
-
-    let accumulated = 0;
-    const threshold = 50;
-
-    const onWheel = (event: WheelEvent) => {
-      if (!viewport.matches(":hover")) return;
-
-      accumulated += event.deltaY;
-
-      if (accumulated >= threshold) {
-        if (emblaApi.canScrollNext()) {
-          event.preventDefault();
-          emblaApi.scrollNext();
-        }
-        accumulated = 0;
-      } else if (accumulated <= -threshold) {
-        if (emblaApi.canScrollPrev()) {
-          event.preventDefault();
-          emblaApi.scrollPrev();
-        }
-        accumulated = 0;
-      }
-    };
-
-    viewport.addEventListener("wheel", onWheel, { passive: false });
-    return () => viewport.removeEventListener("wheel", onWheel);
-  }, [emblaApi]);
 
   return (
     <div className="services-carousel" role="region" aria-roledescription="carousel" aria-label="Тарифы">
