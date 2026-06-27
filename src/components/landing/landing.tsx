@@ -1,4 +1,4 @@
-import { sectionCatalog } from "./catalog";
+import { visibleSections } from "./catalog";
 import { Footer } from "./footer";
 import { Hero } from "./sections/hero";
 import { LazySection } from "./lazy-section";
@@ -13,7 +13,7 @@ export function Landing() {
       <Nav />
       <main className="flex flex-col">
         <Hero />
-        {sectionCatalog.map((entry) => (
+        {visibleSections.map((entry) => (
           <LazySection key={entry.id} entry={entry} />
         ))}
       </main>

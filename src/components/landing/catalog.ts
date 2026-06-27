@@ -6,6 +6,8 @@ export type SectionPriority = "high" | "normal";
 export type SectionEntry = {
   id: SectionId;
   priority: SectionPriority;
+  /** false — секция не рендерится и не попадает в prefetch/nav. */
+  enabled?: boolean;
   /** Плейсхолдер до монтирования; на sm+ — основная высота. */
   minHeight: string;
   /** Ниже 640px; если не задан — используется minHeight. */
@@ -53,6 +55,7 @@ export const sectionCatalog: SectionEntry[] = [
   {
     id: "reviews",
     priority: "normal",
+    enabled: false,
     minHeight: "820px",
     minHeightSm: "520px",
     loader: () => import("./sections/reviews"),
@@ -70,6 +73,8 @@ export const sectionCatalog: SectionEntry[] = [
     loader: () => import("./sections/cta"),
   },
 ];
+
+export const visibleSections = sectionCatalog.filter((entry) => entry.enabled !== false);
 
 export const sectionById = Object.fromEntries(
   sectionCatalog.map((entry) => [entry.id, entry]),

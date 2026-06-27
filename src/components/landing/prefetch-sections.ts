@@ -1,4 +1,4 @@
-import { sectionById, sectionCatalog } from "./catalog";
+import { sectionById, visibleSections } from "./catalog";
 import { navLinks } from "./data/nav";
 import type { SectionId } from "./data/section-id";
 
@@ -167,9 +167,9 @@ function waitForLayoutStable(): Promise<void> {
 }
 
 function getScrollPathIds(targetId: SectionId): SectionId[] {
-  const targetIndex = sectionCatalog.findIndex((entry) => entry.id === targetId);
+  const targetIndex = visibleSections.findIndex((entry) => entry.id === targetId);
   if (targetIndex === -1) return [];
-  return sectionCatalog.slice(0, targetIndex + 1).map((entry) => entry.id);
+  return visibleSections.slice(0, targetIndex + 1).map((entry) => entry.id);
 }
 
 function isScrollPathMounted(pathIds: SectionId[]): boolean {
@@ -461,7 +461,7 @@ export function startBackgroundPrefetch() {
   if (started || typeof window === "undefined") return;
   started = true;
 
-  queue = sectionCatalog
+  queue = visibleSections
     .filter((entry) => entry.priority === "normal" && !loaded.has(entry.id))
     .map((entry) => ({ id: entry.id, loader: entry.loader }));
 
