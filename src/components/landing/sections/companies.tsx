@@ -17,10 +17,10 @@ export default function Companies() {
           eyebrow="Трудоустройство"
           title={
             <>
-              Куда устраиваются <span className="brand-glass brand-glass-heading">наши ученики</span>
+              Востребованность языка <span className="brand-glass brand-glass-heading">Go</span>
             </>
           }
-          subtitle="Компании, в которые наши выпускники и менторы выходили на Go-позиции."
+          subtitle="Компании, активно нанимающие разработчиков на позицию Golang Backend Developer"
         />
       </div>
       <div className="relative mt-12 overflow-hidden">

@@ -35,7 +35,7 @@ export function Hero() {
             <span className="brand-glass brand-glass-text"> с поддержкой до оффера</span>
           </h1>
           <p className="mt-6 max-w-xl text-base text-muted-foreground sm:text-lg">
-            Авторская программа менторства для тех, кто заходит в IT с нуля или мигрирует с frontend и QA. Без воды.
+            Авторская программа менторства для тех, кто заходит в IT с нуля или переходит с другого стека. Без воды.
             Без бесконечных курсов. Только то, что приведёт к найму.
           </p>
           <div className="mt-8 flex flex-wrap gap-3 sm:gap-4">
@@ -47,7 +47,7 @@ export function Hero() {
             </a>
           </div>
           <dl className="mt-10 grid w-full max-w-md grid-cols-[repeat(3,minmax(0,1fr))] gap-4 sm:gap-6">
-            {[["5+", "лет в Go"], ["10", "шагов до оффера"], ["1:1", "формат работы"]].map(([n, l]) => (
+            {[["2", "сильных ментора"], ["5+", "лет в разработке"], ["6+", "лет в преподавании"], ["10", "шагов до оффера"], ["1:1", "формат работы"]].map(([n, l]) => (
               <div key={l} className="min-w-0">
                 <dt className="brand-glass brand-glass-text font-display text-2xl">{n}</dt>
                 <dd className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground sm:text-xs">{l}</dd>
