@@ -104,7 +104,6 @@
 
 @layer base {
   * { border-color: var(--color-border); }
-  html { scroll-behavior: smooth; }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -203,6 +202,22 @@
     background-color: oklch(0.22 0.007 240 / 0.55);
   }
   .hairline { border-top: 1px solid oklch(0.35 0.008 240 / 0.4); }
+
+  .landing-hero {
+    min-height: 36rem;
+  }
+
+  @media (min-width: 640px) {
+    .landing-hero {
+      min-height: 40rem;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .landing-hero {
+      min-height: 44rem;
+    }
+  }
 
   .hero-bg {
     -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);

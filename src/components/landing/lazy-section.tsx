@@ -44,7 +44,7 @@ export function LazySection({ entry }: LazySectionProps) {
           observer.disconnect();
         }
       },
-      { rootMargin: "240px 0px", threshold: 0 },
+      { rootMargin: "0px 0px 240px 0px", threshold: 0 },
     );
 
     observer.observe(node);

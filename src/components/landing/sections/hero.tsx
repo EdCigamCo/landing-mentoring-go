@@ -12,7 +12,7 @@ export function Hero() {
   return (
     <section
       ref={ref}
-      className={`landing-section landing-section--animatable relative shrink-0 overflow-visible${isActive ? " is-animating" : ""}`}
+      className={`landing-section landing-hero landing-section--animatable relative shrink-0 overflow-visible${isActive ? " is-animating" : ""}`}
     >
       <div
         className="hero-bg absolute inset-0 -z-10 opacity-60"

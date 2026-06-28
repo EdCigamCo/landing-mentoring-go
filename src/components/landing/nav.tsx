@@ -11,7 +11,7 @@ import {
   subscribeSectionMounted,
   type NavigationProgress,
 } from "./prefetch-sections";
-import { logoHomeClick, sectionIdFromHash } from "./section-nav";
+import { logoHomeClick } from "./section-nav";
 
 const MobileSheet = lazy(() =>
   import("./nav-mobile-sheet").then((m) => ({ default: m.NavMobileSheet })),
@@ -125,30 +125,6 @@ export function Nav() {
       unsubMount();
       observer?.disconnect();
     };
-  }, []);
-
-  useEffect(() => {
-    if ("scrollRestoration" in history) {
-      history.scrollRestoration = "manual";
-    }
-
-    const id = sectionIdFromHash(window.location.hash);
-    if (id) {
-      void navigateToSection(id, { behavior: "auto" });
-      return;
-    }
-
-    window.scrollTo(0, 0);
-  }, []);
-
-  useEffect(() => {
-    const onHashChange = () => {
-      const id = sectionIdFromHash(window.location.hash);
-      if (id) void navigateToSection(id);
-    };
-
-    window.addEventListener("hashchange", onHashChange);
-    return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
 
   const navLinkClass = (sectionId: SectionId) =>

@@ -65,7 +65,25 @@ function ServiceCard({ service, isActive }: { service: Service; isActive: boolea
 }
 
 function ServicesCarouselShell() {
-  return <div className="services-carousel min-h-[41rem]" aria-hidden />;
+  return (
+    <div className="services-carousel" aria-hidden>
+      <div className="services-carousel__viewport">
+        <div className="services-carousel__track">
+          <div className="services-carousel__slide">
+            <div className="services-carousel__slide-inner" />
+          </div>
+        </div>
+      </div>
+      <div className="services-carousel__dots">
+        {services.map((s) => (
+          <div
+            key={s.id}
+            className={cn("services-carousel__dot", s.id === services[1]?.id && "services-carousel__dot--active")}
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function ServicesCarousel({ isInView }: { isInView: boolean }) {

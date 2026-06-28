@@ -266,6 +266,38 @@ function scrollSectionIntoView(id: SectionId, behavior: ScrollBehavior) {
   target.scrollIntoView({ behavior, block: "start" });
 }
 
+/** Smooth для nav-кликов; auto при prefers-reduced-motion или явном override. */
+function defaultNavScrollBehavior(): ScrollBehavior {
+  if (typeof window === "undefined") return "auto";
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+}
+
+const SMOOTH_SCROLL_END_FALLBACK_MS = 2000;
+
+/** Не запускать layout-коррекции, пока идёт smooth scroll — иначе auto rescroll обрывает анимацию. */
+function afterNavScroll(behavior: ScrollBehavior, callback: () => void): void {
+  if (behavior !== "smooth") {
+    callback();
+    return;
+  }
+
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    window.clearTimeout(fallbackTimer);
+    document.removeEventListener("scrollend", onScrollEnd);
+    callback();
+  };
+
+  const onScrollEnd = () => finish();
+  const fallbackTimer = window.setTimeout(finish, SMOOTH_SCROLL_END_FALLBACK_MS);
+
+  if ("onscrollend" in document) {
+    document.addEventListener("scrollend", onScrollEnd, { once: true, passive: true });
+  }
+}
+
 function getScrollCorrectionElements(pathIds: SectionId[]): HTMLElement[] {
   const elements = getPathElements(pathIds);
   const header = document.querySelector<HTMLElement>(".landing-header");
@@ -412,15 +444,15 @@ export async function navigateToSection(
   const generation = beginNavigationProgress(id);
 
   try {
-    const { pathFullyMounted } = await ensureScrollPathReady(id, (progress) => {
+    await ensureScrollPathReady(id, (progress) => {
       updateNavigationProgress(generation, progress);
     });
 
     updateNavigationProgress(generation, 98);
 
-    const behavior = options.behavior ?? (pathFullyMounted ? "smooth" : "auto");
+    const behavior = options.behavior ?? defaultNavScrollBehavior();
     scrollSectionIntoView(id, behavior);
-    watchScrollCorrections(id, generation);
+    afterNavScroll(behavior, () => watchScrollCorrections(id, generation));
   } finally {
     completeNavigationProgress(generation);
   }
